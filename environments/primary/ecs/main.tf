@@ -1,0 +1,91 @@
+//==================================================================================
+// 2. ECS
+//==================================================================================
+
+data "terraform_remote_state" "network_rds" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/primary/network_rds.tfstate"
+    region = "eu-central-1"
+  }
+}
+
+data "terraform_remote_state" "alb" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/primary/alb.tfstate"
+    region = "eu-central-1"
+  }
+}
+
+module "sg_ecs" {
+  source = "../../../modules/sg"
+  vpc_id = data.terraform_remote_state.network_rds.outputs.vpc_id
+  security_group = var.ecs_security_group_config
+  stage_tag = "ECS"
+  external_security_groups = {
+    ALB-SG = data.terraform_remote_state.alb.outputs.alb_security_group_id
+  }
+}
+
+data "terraform_remote_state" "iam" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/global/iam.tfstate"
+    region = "eu-central-1"
+  }    
+}
+
+data "terraform_remote_state" "s3" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/primary/s3.tfstate"
+    region = "eu-central-1"
+  }  
+}
+
+data "terraform_remote_state" "cdn_dns" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/global/cdn_dns.tfstate"
+    region = "eu-central-1"
+  }    
+}
+
+module "ecs" {
+    source = "../../../modules/ecs"
+    # infrastructure data
+    vpc_id = data.terraform_remote_state.network_rds.outputs.vpc_id    
+    private_subnets_ids = data.terraform_remote_state.network_rds.outputs.private_subnets_ids  
+    # RDS data     
+    //rds_name = data.terraform_remote_state.network_rds.outputs.rds_name                                                            
+    wordpress_secret_arn = data.terraform_remote_state.network_rds.outputs.wordpress_secret_arn
+    # ALB data
+    target_group_arn = data.terraform_remote_state.alb.outputs.target_group_arn
+    target_group_arn_suffix = data.terraform_remote_state.alb.outputs.target_group_arn_suffix 
+    load_balancer_arn_suffix = data.terraform_remote_state.alb.outputs.alb_arn_suffix
+    # Storage & CDN
+    s3_bucket_name = data.terraform_remote_state.s3.outputs.bucket_name
+    primary_domain = data.terraform_remote_state.cdn_dns.outputs.primary_domain
+    cloudfront_distribution_id = data.terraform_remote_state.cdn_dns.outputs.media_distribution_id
+    cloudfront_media_domain = data.terraform_remote_state.cdn_dns.outputs.media_distribution_domain
+    # Docker image
+    docker_image_uri = var.docker_image_uri_config
+    # ECS configuration
+    security_groups = module.sg_ecs.ecs_security_groups
+    vpc_endpoints_security_group_id = module.sg_ecs.vpc_endpoints_security_group_id
+    ecs_cluster_name = var.ecs_cluster_name_config
+    ecs_execution_role_arn = data.terraform_remote_state.iam.outputs.ecs_execution_role_arn
+    ecs_task_role_arn = data.terraform_remote_state.iam.outputs.ecs_task_role_arn
+    ecs_task_definition = var.ecs_task_definition_config
+    ecs_service = var.ecs_service_config
+    # VPC Endpoints
+    vpc_endpoints = var.vpc_endpoints_config
+}
+
+

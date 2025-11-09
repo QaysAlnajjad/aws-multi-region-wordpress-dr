@@ -1,0 +1,102 @@
+# Remote state for network
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/dr/network.tfstate"
+    region = "eu-central-1"
+  }
+}
+
+# Remote state for primary RDS (to get WordPress secret)
+data "terraform_remote_state" "primary_rds" {
+  backend = "s3"
+  config = {
+    bucket = var.state_bucket
+    key = "environments/primary/network_rds.tfstate"
+    region = "eu-central-1"
+  }
+}
+
+# Get primary RDS instance info
+data "aws_db_instance" "primary" {
+  db_instance_identifier = "mysql"
+  provider = aws.primary
+}
+
+resource "aws_db_instance" "read_replica" {
+  identifier = "mysql-dr-replica"
+  
+  replicate_source_db = data.aws_db_instance.primary.db_instance_arn
+  
+  # Instance configuration
+  instance_class = "db.t3.micro"
+  
+  # Network configuration
+  db_subnet_group_name = aws_db_subnet_group.dr.name
+  vpc_security_group_ids = [aws_security_group.rds_dr.id]
+  
+  # Read replicas inherit most settings from source
+  skip_final_snapshot = true
+  
+  tags = {
+    Name = "WordPress-DR-ReadReplica"
+    Environment = "DR"
+  }
+}
+
+# Subnet group for DR
+resource "aws_db_subnet_group" "dr" {
+  name = "wordpress-dr-subnet-group"
+  subnet_ids = data.terraform_remote_state.network.outputs.private_subnets_ids
+  
+  tags = {
+    Name = "WordPress DR DB subnet group"
+  }
+}
+
+# Security group for RDS
+resource "aws_security_group" "rds_dr" {
+  name_prefix = "wordpress-rds-dr-"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  
+  ingress {
+    from_port = 3306
+    to_port = 3306
+    protocol = "tcp"
+    cidr_blocks = ["172.16.0.0/16"]
+  }
+  
+  tags = {
+    Name = "WordPress-RDS-DR-SG"
+  }
+}
+
+# Get primary WordPress secret to copy credentials
+data "aws_secretsmanager_secret_version" "primary_wordpress" {
+  provider = aws.primary
+  secret_id = data.terraform_remote_state.primary_rds.outputs.wordpress_secret_arn
+}
+
+# Create DR secret with same WordPress credentials
+resource "aws_secretsmanager_secret" "wordpress_dr" {
+  name = "mysql-dr-replica-wordpress-secret"
+  description = "WordPress database credentials for DR"
+  recovery_window_in_days = 0
+  tags = {
+    Project = "wordpress"
+    Component = "secret"
+  }
+}
+
+# Store same WordPress credentials but with DR database host
+resource "aws_secretsmanager_secret_version" "wordpress_dr" {
+  secret_id = aws_secretsmanager_secret.wordpress_dr.id
+  secret_string = jsonencode({
+    username = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).username
+    password = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).password
+    dbname   = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).dbname
+    host     = split(":", aws_db_instance.read_replica.endpoint)[0]
+    port     = aws_db_instance.read_replica.port
+  })
+}

@@ -1,0 +1,17 @@
+aws-disaster-recovery.tgz
+.terraform/
+*.pem
+*.key
+aws-disaster-recovery.tgz
+.terraform/
+*.pem
+*.key
+aws-disaster-recovery.tgz
+.terraform/
+terraform.tfstate*
+*.tfvars
+*.pem
+*.key
+project_diagram.pdf
+node_modules/
+.vscode/
