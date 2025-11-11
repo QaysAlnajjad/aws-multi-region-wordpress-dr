@@ -13,4 +13,7 @@ output "media_distribution_domain" {
 output "media_distribution_arn" {
   value = aws_cloudfront_distribution.main["wordpress-media"].arn
 }
-  
+
+output "app_distribution_arn" {
+  value = aws_cloudfront_distribution.main["wordpress-app"].arn
+}

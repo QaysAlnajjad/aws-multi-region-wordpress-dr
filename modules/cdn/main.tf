@@ -6,7 +6,7 @@ resource "aws_cloudfront_distribution" "main" {
   for_each = var.cloudfront_distribution
     
     dynamic "origin" {
-      for_each = try(each.value.s3_bucket_name, null) != null ? [
+      for_each = coalesce(each.value.s3_origin, false) ? [
         {
           id = "Primary"
           domain_name = var.primary_bucket_regional_domain_name
@@ -24,7 +24,7 @@ resource "aws_cloudfront_distribution" "main" {
     }
     
     dynamic "origin_group" {
-      for_each = try(each.value.s3_bucket_name, null) != null ? [1] : []
+      for_each = coalesce(each.value.s3_origin, false) ? [1] : []
       content {
         origin_id = "${each.key}-S3-Group"
         
@@ -33,11 +33,11 @@ resource "aws_cloudfront_distribution" "main" {
         }
         
         member {
-          origin_id = "${each.key}-S3-Primary"
+          origin_id = "${each.key}-S3-DR"
         }
         
         member {
-          origin_id = "${each.key}-S3-DR"
+          origin_id = "${each.key}-S3-Primary"
         }
       }
     }
@@ -59,8 +59,10 @@ resource "aws_cloudfront_distribution" "main" {
         custom_origin_config {
           http_port = 80
           https_port = 443
-          origin_protocol_policy = "http-only"
+          origin_protocol_policy = "https-only"
           origin_ssl_protocols = ["TLSv1.2"]
+          origin_read_timeout = 60
+          origin_keepalive_timeout = 10
         }
       }
     }
@@ -84,7 +86,34 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
 
+ordered_cache_behavior {
+  path_pattern     = "/wp-content/uploads/*"
+  target_origin_id = coalesce(each.value.s3_origin, false) ? "${each.key}-S3-Group" : "${each.key}-ALB-Group"
 
+  allowed_methods = each.value.cache_behavior.allowed_methods
+  cached_methods  = each.value.cache_behavior.cached_methods
+  compress        = true
+  viewer_protocol_policy = "redirect-to-https"
+
+  forwarded_values {
+    query_string = coalesce(each.value.cache_behavior.forward_query_string, false)
+    cookies {
+      forward = coalesce(each.value.cache_behavior.forward_cookies, "none")
+    }
+    headers = coalesce(
+      [
+        for h in coalesce(each.value.cache_behavior.forward_headers, []) :
+        h
+        if !(coalesce(each.value.s3_origin, false) && lower(h) == "host")
+      ],
+      []
+    )
+  }
+
+  min_ttl     = 0
+  default_ttl = lookup(each.value.cache_behavior, "media_ttl_default", each.value.cache_behavior.ttl_default)
+  max_ttl     = lookup(each.value.cache_behavior, "media_ttl_max", each.value.cache_behavior.ttl_max)
+}
 
 
     default_cache_behavior {
@@ -99,12 +128,38 @@ resource "aws_cloudfront_distribution" "main" {
         cookies {
           forward = coalesce(each.value.cache_behavior.forward_cookies, "none")
         }
-        headers = coalesce(each.value.cache_behavior.forward_headers, [])
+        headers = coalesce(
+          [
+            for h in coalesce(each.value.cache_behavior.forward_headers, []) :
+            h
+            # exclude Host only when default target is S3 (alb_origin == false)
+            if !(coalesce(each.value.alb_origin, false) == false && lower(h) == "host")
+          ],
+          []
+        )
       }
 
       min_ttl = each.value.cache_behavior.ttl_min
       default_ttl = each.value.cache_behavior.ttl_default
       max_ttl = each.value.cache_behavior.ttl_max
+    }
+
+    # Avoid caching transient origin failures
+    custom_error_response {
+      error_code            = 500
+      error_caching_min_ttl = 0
+    }
+    custom_error_response {
+      error_code            = 502
+      error_caching_min_ttl = 0
+    }
+    custom_error_response {
+      error_code            = 503
+      error_caching_min_ttl = 0
+    }
+    custom_error_response {
+      error_code            = 504
+      error_caching_min_ttl = 0
     }
 
     price_class = each.value.price_class

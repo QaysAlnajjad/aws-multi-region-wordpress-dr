@@ -65,10 +65,23 @@ deploy_environment "dr/certificate" "certificate.tfvars"
 deploy_environment "dr/alb" "alb.tfvars"
 
 deploy_environment "global/cdn_dns" "cdn_dns.tfvars"
-CLOUDFRONT_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw media_distribution_arn)
+
+# collect ARNs (media + app)
+MEDIA_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw media_distribution_arn)
+APP_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw app_distribution_arn 2>/dev/null || echo "")
+
+# build JSON list with jq (only include non-empty items)
+CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" --arg a "$APP_ARN" '[ $m, $a ] | map(select(. != ""))')
+
+# then pass when applying s3
 terraform -chdir="environments/primary/s3" apply \
   -var-file="s3.tfvars" \
-  -var="cloudfront_media_distribution_arn=$CLOUDFRONT_ARN" \
+  -var="cloudfront_distribution_arns=${CF_ARNS_JSON}" \
+  -var="state_bucket=$BUCKET_NAME" \
+  -auto-approve
+terraform -chdir="environments/dr/s3" apply \
+  -var-file="s3.tfvars" \
+  -var="cloudfront_distribution_arns=${CF_ARNS_JSON}" \
   -var="state_bucket=$BUCKET_NAME" \
   -auto-approve
 

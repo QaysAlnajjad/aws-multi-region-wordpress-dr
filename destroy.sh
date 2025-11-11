@@ -55,10 +55,9 @@ destroy_environment() {
 destroy_environment "dr/ecs" "ecs.tfvars"
 destroy_environment "primary/ecs" "ecs.tfvars"
 
-destroy_environment "dr/s3" "s3.tfvars"
-
 destroy_environment "global/cdn_dns" "cdn_dns.tfvars"
 
+destroy_environment "dr/s3" "s3.tfvars"
 destroy_environment "dr/alb" "alb.tfvars"
 destroy_environment "dr/certificate" "certificate.tfvars"
 destroy_environment "dr/read_replica_rds" "read_replica_rds.tfvars"

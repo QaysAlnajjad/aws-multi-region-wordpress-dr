@@ -2,6 +2,7 @@ variable "cloudfront_distribution_config" {
     type = map(object({
         s3_bucket_name = optional(string)
         alb_origin = optional(bool)
+        s3_origin = optional(bool)
         price_class = string
         cache_behavior = object({
           allowed_methods = list(string)

@@ -51,10 +51,9 @@ data "aws_caller_identity" "current" {}
 
 
 
-# S3 Bucket Policy for CloudFront only if CloudFront distribution ARN is provided
 resource "aws_s3_bucket_policy" "wordpress_media" {
-  count = var.cloudfront_media_distribution_arn != "" ? 1 : 0
-  
+  count = length(coalesce(var.cloudfront_distribution_arns, [])) > 0 ? 1 : 0
+
   bucket = aws_s3_bucket.wordpress_media.id
 
   policy = jsonencode({
@@ -65,17 +64,14 @@ resource "aws_s3_bucket_policy" "wordpress_media" {
         Principal = {
           Service = "cloudfront.amazonaws.com"
         }
-        Action   = [
-          "s3:GetObject"
-        ]
-        Resource = "${aws_s3_bucket.wordpress_media.arn}/*"        
+        Action = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.wordpress_media.arn}/*"
         Condition = {
           StringEquals = {
-            "AWS:SourceArn" = var.cloudfront_media_distribution_arn
+            "AWS:SourceArn" = var.cloudfront_distribution_arns
           }
         }
       }
     ]
   })
 }
-
