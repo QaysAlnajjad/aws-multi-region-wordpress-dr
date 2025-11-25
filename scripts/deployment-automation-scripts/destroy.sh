@@ -64,6 +64,7 @@ STACK_VARS["primary/alb"]="\
   -var-file=alb.tfvars \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
+  -var hosted_zone_id=$HOSTED_ZONE_ID \
   -var provided_ssl_certificate_arn=$PRIMARY_ALB_SSL_CERTIFICATE_ARN"
 
 # DR Read Replica RDS
@@ -82,6 +83,7 @@ STACK_VARS["dr/alb"]="\
   -var-file=alb.tfvars \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
+  -var hosted_zone_id=$HOSTED_ZONE_ID \
   -var provided_ssl_certificate_arn=$DR_ALB_SSL_CERTIFICATE_ARN"
 
 # GLOBAL CloudFront + DNS
