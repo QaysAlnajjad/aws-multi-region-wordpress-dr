@@ -135,8 +135,8 @@ APP_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw app_distrib
 CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" --arg a "$APP_ARN" '[ $m, $a ] | map(select(. != ""))')
 
 echo "Pushing Docker images to ECR..."
-./scripts/deployment-automation-scripts/push-docker-hub-to-ecr.sh $PRIMARY_REGION "primary"
-./scripts/deployment-automation-scripts/push-docker-hub-to-ecr.sh $DR_REGION "dr"
+./scripts/deployment-automation-scripts/pull-docker-hub-to-ecr.sh $PRIMARY_REGION "primary"
+./scripts/deployment-automation-scripts/pull-docker-hub-to-ecr.sh $DR_REGION "dr"
 PRIMARY_ECR_IMAGE_URI=$(cat scripts/runtime/primary-ecr-image-uri)
 DR_ECR_IMAGE_URI=$(cat scripts/runtime/dr-ecr-image-uri)
 
