@@ -71,6 +71,9 @@ docker tag "${DOCKERHUB_IMAGE}" "${TARGET}"
 echo "Pushing ${TARGET} to ECR..."
 docker push "${TARGET}"
 
+
+mkdir -p scripts/runtime
+
 echo
 echo "SUCCESS: pushed image to ECR:"
 echo "${TARGET}"
