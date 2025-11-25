@@ -52,18 +52,18 @@ This project deploys a multi-region, production-grade WordPress platform using:
                                └───────┬──────┘
                                        │
                             ┌──────────▼──────────┐
-                            │     CloudFront       │
-                            │     Origin Groups    │
+                            │     CloudFront      │
+                            │     Origin Groups   │
                             └──────────┬──────────┘
                     (HTTP errors)      │       (Normal)
-                         Failover       │        Flow
-                          ▼             │         ▼
-                ┌────────────────┐      │   ┌────────────────┐
-                │    ALB (DR)    │◄─────┘   │ ALB (Primary)  │
-                └────────────────┘          └────────────────┘
+                         Failover      │        Flow
+                          ▼            │         ▼
+                ┌────────────────┐     │   ┌────────────────┐
+                │    ALB (DR)    │◄────┘   │ ALB (Primary)  │
+                └────────────────┘         └────────────────┘
                        │                            │
-                       │     us-east-1     ca-central-1
-                       │        (DR)          (Primary)
+                   us-east-1                   ca-central-1
+                     (DR)                       (Primary)
                        │                            │
                 ┌────────────────┐          ┌────────────────┐
                 │ ECS Fargate    │          │ ECS Fargate    │
@@ -72,21 +72,22 @@ This project deploys a multi-region, production-grade WordPress platform using:
                        │                            │
                        └──────────────┬─────────────┘
                                       │
-                                  ┌───▼───────────────┐
-                                  │   WordPress App   │
-                                  └────────┬──────────┘
-                                           │
-                               ┌───────────▼────────────┐
-                               │       RDS MySQL         │
-                               └───────────┬────────────┘
-                                           │
-                         ┌─────────────────▼──────────────────┐
-                         │    Primary Writer (us-east-1)       │
-                         └─────────────────┬────────────────────┘
-                                           │ Replication
-                         ┌─────────────────▼──────────────────┐
-                         │   Read Replica (ca-central-1)       │
-                         └─────────────────────────────────────┘
+                                      |                                 
+                            ┌─────────▼─────────┐
+                            │   WordPress App   │
+                            └─────────┬─────────┘
+                                      │
+                          ┌───────────▼───────────┐
+                          │       RDS MySQL       │
+                          └───────────┬───────────┘
+                                      │
+                    ┌─────────────────▼──────────────────┐
+                    │    Primary Writer (us-east-1)      │
+                    └─────────────────┬──────────────────┘
+                                      │ Replication
+                    ┌─────────────────▼──────────────────┐
+                    │    Read Replica (ca-central-1)     │
+                    └────────────────────────────────────┘
 
 
                 Media Failover (Automatic through CloudFront)
