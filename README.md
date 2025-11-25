@@ -42,48 +42,59 @@ This project deploys a multi-region, production-grade WordPress platform using:
 * **Database:** RDS MySQL with cross-region read-replica
 * **Media:** S3 + CloudFront
 * **Failover:** CloudFront Origin Groups (primary ALB → DR ALB)
-
----
+--- 
 
 ## 🏗 Multi-Region Architecture (ASCII Diagram)
 
-                    ┌────────────────────┐
-                    │     Route 53       │
-                    └─────────┬──────────┘
-                              │
-                              ▼
-                    ┌────────────────────┐
-                    │    CloudFront      │
-                    │  Origin Groups     │
-                    └─────────┬──────────┘
-               (HTTP errors)  │    (Normal)
-               Failover       │
-        ┌─────────────────────┴─────────────────────┐
-        │                                           │
-        ▼                                           ▼
-┌──────────────────┐                     ┌──────────────────┐
-│   ALB (Primary)  │                     │    ALB (DR)      │
-│   us-east-1      │   <-- fallback -->  │  ca-central-1    │
-└─────────┬────────┘                     └─────────┬────────┘
-          │                                          │
-          ▼                                          ▼
- ┌──────────────────┐                        ┌──────────────────┐
- │ ECS Fargate (2)  │                        │ ECS Fargate (0*) │
- │ WordPress Tasks  │                        │ Warm Standby     │
- └──────────────────┘                        └──────────────────┘
-          │                                          │
-          ▼                                          ▼
-┌──────────────────┐                      ┌──────────────────┐
-│ RDS MySQL        │  Replica            │ RDS Read Replica  │
-│ Primary (Writer) │ ───────────────────▶│ DR Region         │
-└──────────────────┘                      └──────────────────┘
+```text
+                               ┌──────────────┐
+                               │   Route 53   │
+                               └───────┬──────┘
+                                       │
+                            ┌──────────▼──────────┐
+                            │     CloudFront       │
+                            │     Origin Groups    │
+                            └──────────┬──────────┘
+                    (HTTP errors)      │       (Normal)
+                         Failover       │        Flow
+                          ▼             │         ▼
+                ┌────────────────┐      │   ┌────────────────┐
+                │    ALB (DR)    │◄─────┘   │ ALB (Primary)  │
+                └────────────────┘          └────────────────┘
+                       │                            │
+                       │     us-east-1     ca-central-1
+                       │        (DR)          (Primary)
+                       │                            │
+                ┌────────────────┐          ┌────────────────┐
+                │ ECS Fargate    │          │ ECS Fargate    │
+                │     (0*)       │          │      (2)       │
+                └────────────────┘          └────────────────┘
+                       │                            │
+                       └──────────────┬─────────────┘
+                                      │
+                                  ┌───▼───────────────┐
+                                  │   WordPress App   │
+                                  └────────┬──────────┘
+                                           │
+                               ┌───────────▼────────────┐
+                               │       RDS MySQL         │
+                               └───────────┬────────────┘
+                                           │
+                         ┌─────────────────▼──────────────────┐
+                         │    Primary Writer (us-east-1)       │
+                         └─────────────────┬────────────────────┘
+                                           │ Replication
+                         ┌─────────────────▼──────────────────┐
+                         │   Read Replica (ca-central-1)       │
+                         └─────────────────────────────────────┘
 
-                Media Failover (Automatic)
-        ┌────────────────────┐      ┌────────────────────┐
-        │   S3 Primary       │◀────▶│     S3 DR           │
-        └────────────────────┘      └────────────────────┘
 
----
+                Media Failover (Automatic through CloudFront)
+
+                         ┌───────────────┐    Read    ┌───────────────┐
+                         │  S3 Primary   │◄──────────►│     S3 DR     │
+                         └───────────────┘            └───────────────┘
+```
 
 # ⭐ **Key Features**
 
