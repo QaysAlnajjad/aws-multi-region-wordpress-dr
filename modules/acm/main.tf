@@ -7,7 +7,9 @@
 # ----------------------------------------------------------------------
 resource "aws_acm_certificate" "cert" {
   domain_name               = var.domain_name
-  subject_alternative_names = var.subject_alternative_names
+  subject_alternative_names = [
+    for san in var.subject_alternative_names : trimsuffix(san, ".")
+  ]
   validation_method         = "DNS"
 
   lifecycle {
