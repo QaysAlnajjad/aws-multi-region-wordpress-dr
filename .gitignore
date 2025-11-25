@@ -8,7 +8,6 @@ terraform.tfstate.*
 crash.log
 override.tf
 override.tf.json
-*.tfvars
 *.auto.tfvars
 
 # Ignore IDE-specific override files
