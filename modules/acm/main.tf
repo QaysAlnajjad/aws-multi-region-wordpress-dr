@@ -26,12 +26,15 @@ locals {
   validation_domains = tolist(aws_acm_certificate.cert.domain_validation_options)
 }
 resource "aws_route53_record" "cert_validation" {
-  count = length(local.validation_domains)
+  for_each = {for k, v in local.validation_domains : k => v }
   zone_id = var.hosted_zone_id
-  name = local.validation_domains[count.index].resource_record_name
-  type = local.validation_domains[count.index].resource_record_type
+  //name = local.validation_domains[count.index].resource_record_name
+  name = v.resource_record_name
+  //type = local.validation_domains[count.index].resource_record_type
+  type = v.resource_record_type
   ttl = 60
-  records = [local.validation_domains[count.index].resource_record_value]
+  //records = [local.validation_domains[count.index].resource_record_value]
+  records = [v.resource_record_name]
 }
 
 
