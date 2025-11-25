@@ -150,12 +150,12 @@ else
     echo "No runtime ECR image state found in DR environment — skipping image cleanup."
 fi
 
-#destroy_stack "global/cdn_dns"
-#destroy_stack "dr/alb"
-#destroy_stack "dr/s3"
-#destroy_stack "dr/read_replica_rds"
-#destroy_stack "primary/alb"
-#destroy_stack "primary/s3"
+destroy_stack "global/cdn_dns"
+destroy_stack "dr/alb"
+destroy_stack "dr/s3"
+destroy_stack "dr/read_replica_rds"
+destroy_stack "primary/alb"
+destroy_stack "primary/s3"
 destroy_stack "dr/network"
 destroy_stack "primary/network_rds"
 destroy_stack "global/oac"
