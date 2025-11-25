@@ -3,6 +3,5 @@
 //==========================================================================================================================================
 
 output "certificate_arn" {
-  description = "ARN of ACM certificate (newly created)"
-  value = aws_acm_certificate_validation.cert[0].certificate_arn
+  value = aws_acm_certificate_validation.cert.certificate_arn
 }
