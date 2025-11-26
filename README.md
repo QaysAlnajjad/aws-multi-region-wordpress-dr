@@ -421,18 +421,19 @@ This file contains all environment-specific parameters:
 
 ✔ Required fields inside config.sh
 
-| Variable                | Purpose                                     |
-|-------------------------|---------------------------------------------|
-| PRIMARY_REGION          | ex: us-east-1                               |
-| DR_REGION               | ex: ca-central-1                            |
-| AWS_ACCOUNT_ID          | User’s AWS account ID                       |
-| DOCKERHUB_IMAGE         | Docker Hub image used for ECR mirroring     |
-| ECR_REPO_NAME           | Name of ECR repository                      |
-| PRIMARY_ENV_NAME        | Name of primary Terraform stack             |
-| DR_ENV_NAME             | Name of DR Terraform stack                  |
-| TF_STATE_BUCKET_NAME    | Name of S3 remote state bucket              |  
-| TF_STATE_BUCKET_REGION  | Region of S3 remote state bucket            |
-
+| Variable                        | Purpose                                     |
+|---------------------------------|---------------------------------------------|
+| PRIMARY_REGION                  | ex: us-east-1                               |
+| DR_REGION                       | ex: ca-central-1                            |
+| TF_STATE_BUCKET_NAME            | Name of S3 remote state bucket              |  
+| TF_STATE_BUCKET_REGION          | Region of S3 remote state bucket            |
+| PRIMARY_DOMAIN                  | 
+| HOSTED_ZONE_ID                  |
+| PRIMARY_MEDIA_S3_BUCKET         |
+| DR_MEDIA_S3_BUCKET              |
+| PRIMARY_ALB_SSL_CERTIFICATE_ARN | 
+| DR_ALB_SSL_CERTIFICATE_ARN      |
+| CLOUDFRONT_SSL_CERTIFICATE_ARN  |
 
 This design ensures:
 - No AWS region values are hard-coded

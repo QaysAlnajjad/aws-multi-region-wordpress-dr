@@ -1,7 +1,3 @@
-output "primary_domain" {
-    value = var.primary_domain
-}
-
 output "media_distribution_id" {
   value = module.cdn_dns.media_distribution_id
 }

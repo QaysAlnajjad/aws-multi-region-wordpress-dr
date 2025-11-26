@@ -43,7 +43,7 @@ data "terraform_remote_state" "dr_alb" {
   }
 }
 
-module "cloudfront_cert" {
+module "cert" {
   count = var.provided_ssl_certificate_arn == "" ? 1 :0
   source = "../../../modules/acm"
 
@@ -72,5 +72,5 @@ module "cdn_dns" {
   cloudfront_distribution = var.cloudfront_distribution_config
   primary_domain = var.primary_domain
   hosted_zone_id = var.hosted_zone_id
-  ssl_certificate_arn = var.provided_ssl_certificate_arn != "" ? var.provided_ssl_certificate_arn : module.cloudfront_cert.certificate_arn
+  ssl_certificate_arn = var.provided_ssl_certificate_arn != "" ? var.provided_ssl_certificate_arn : module.cert[0].certificate_arn
 }
