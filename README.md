@@ -23,9 +23,9 @@ All infrastructure is 100% managed using **Terraform**, following AWS **Well-Arc
 * [Infrastructure Components](#infrastructure-components)
 * [Failover Strategy](#failover-strategy)
 * [Terraform Structure](#terraform-structure)
-* [Deployment & Destroy Workflow](#deployment-and-destroy-workflow)
+* [Reviewer Setup (How to Deploy This Project in Your AWS Account)](#Reviewer-Setup-How-to-Deploy-This-Project-in-Your-AWS-Account)
 * [DR Failover Guide](#dr-failover-guide)
-* [Security Best Practices](#security-best-practices)
+* [Security Best Practices Used](#security-best-practices-used)
 * [Cost Optimization](#cost-optimization)
 * [License](#license)
 
@@ -297,7 +297,6 @@ When the primary region becomes unavailable:
 
 This architecture follows AWS Warm Standby DR pattern — a cost-efficient model where the secondary region remains ready but scaled down until failover.
 
-
 ---
 
 # 📁 **Terraform Structure**
@@ -339,65 +338,44 @@ aws-disaster-recovery/
     │   └── pull-docker-hub-to-ecr.sh
     └── runtime/
         ├── primary-ecr-image-uri
-        └── dr-ecr-image-uri
- 
-   
+        └── dr-ecr-image-uri   
 ```
-
 This structure prevents dependency cycles and allows independent region deployments.
 
 ---
 
-# 🚀 **Deployment & Destroy Workflow**
+# 📘 **Reviewer Setup (How to Deploy This Project in Your AWS Account)** 
 
-This project includes fully automated deployment and teardown scripts located in:
-scripts/deployment-automation-scripts/
+This section explains exactly how to deploy and test the full multi-region WordPress DR architecture in your own AWS account, with no AWS access keys and no manual Terraform commands (after bootstrap).
 
-These scripts deploy stacks in the correct order:
+The setup is intentionally simple and follows AWS + GitHub industry CI/CD patterns.
+## ✅ 1. Requirements
 
-1. **Primary Region** (by default: us-east-1)  
-2. **DR Region** (by default: ca-central-1)  
-3. **Global Stack** (CloudFront + Route 53)
+You need:
 
+✔ AWS account
+with permissions to create IAM, VPC, ECS, RDS, S3, CloudFront, ALB, Route53.
 
-They also handle:
+✔ A Route53 hosted zone
+for your domain (example: yourdomain.com).
 
-- ECR image mirroring
-- Terraform variable injection
-- Runtime metadata
-- State validation
+✔ (Optional) ACM certificates
+If you don’t provide them, the infrastructure will create them automatically.
 
-## ⚙️ Prerequisite (Required Before Any Deployment): 
+## 🚀 2. Clone the Project
 
-Before running any deployment method (manual or GitHub Actions), two prerequisites must be completed.
-
-### 1.Bootstrap: GitHub Actions OIDC Role (One-Time Setup)
-
-This project uses GitHub OIDC -> AWS IAM for secure, keyless CI/CD authentication.
-This bootstrap stack must be deployed once before using GitHub Actions:
-
-To use OIDC, the IAM role and trust relationship must be created manually once.
-
-Step A - Authenticate locally to AWS
-authenticate using either:
-- option 1: AWS CLI profile
+No fork needed:
 ```bash
-aws configure
-```
-- option 2: Environment variables
-```bash
-export AWS_ACCESS_KEY_ID=xxxx
-export AWS_SECRET_ACCESS_KEY=xxxx
-export AWS_DEFAULT_REGION=us-east-1
+git clone https://github.com/QaysAlnajjad/aws-multi-region-wordpress-dr.git
+cd aws-multi-region-wordpress-dr
 ```
 
-Step B - Deploy the Bootstrap Stack
-from the project roo, run:
-```bash
-terraform -chdir=environments/bootstrap init
-terraform -chdir=environments/bootstrap apply 
-``` 
-This stack creates:
+## 🟦 3. Deploy the Bootstrap Stack (ONE TIME ONLY)
+
+This step enables GitHub Actions OIDC → AWS IAM, allowing GitHub to deploy in your AWS account without any access keys.
+
+✔ What bootstrap creates:
+
 |              Resource                      |                            Purpose                                   |
 | ------------------------------------------ | -------------------------------------------------------------------- |
 | AWS IAM OpenID Connect Provider (GitHub)   | Allow GitHub Actions to authenticate to AWS                          |
@@ -405,22 +383,56 @@ This stack creates:
 | Trust policy restricted to the repository  | security-hardening: only our repository can use this role            |
 | AdministratorAccess policy                 | Full deploy/destroy capabilities (reviewer may restrict this later)  |
 
-After this role is created, GitHub Actions can deploy the entire infrastructure with zero AWS keys. After bootstrap, no AWS credentials are needed anywhere in the project.
+Step 3.1 — Authenticate to AWS locally
 
-### 2.Configure config.sh Before Deployment
+Either:
+```bash
+aws configure
+```
+or
+```bash
+export AWS_ACCESS_KEY_ID=xxxx
+export AWS_SECRET_ACCESS_KEY=xxxx
+export AWS_DEFAULT_REGION=us-east-1
+```
+Step 3.2 — Deploy bootstrap
+```bash
+terraform -chdir=environments/bootstrap init
+terraform -chdir=environments/bootstrap apply
+```
+You will receive an output:
+```bash
+github_actions_role_arn = arn:aws:iam::<ACCOUNT-ID>:role/github-actions-terraform-role
+```
 
-Before running:
-* deploy.sh
-* destroy.sh
-* GitHub Actions workflows
+## 🟩 4. Add the Role ARN to GitHub Actions Workflows
 
-The user must configure:
+You do NOT need GitHub secrets.
+
+Just open:
+```bash
+.github/workflows/deploy.yml  
+.github/workflows/destroy.yml
+```
+Find:
+```bash
+role-to-assume: arn:aws:iam::<ACCOUNT-ID>:role/github-actions-terraform-role
+```
+Replace <ACCOUNT-ID> with your AWS account ID.
+
+✔ This is all GitHub needs.
+✔ No secrets.
+✔ No PAT.
+✔ No long-lived keys.
+✔ Secure and industry-standard.
+
+## 🟧 5. Configure Deployment Parameters
+
+Open:
+```bash
 scripts/deployment-automation-scripts/config.sh
-
-This file contains all environment-specific parameters:
-
-✔ Required fields inside config.sh
-
+```
+Edit values to match your AWS environment:
 | Variable                        | Purpose                                                                              |
 |---------------------------------|--------------------------------------------------------------------------------------|
 | PRIMARY_REGION                  | AWS region for the primary deployment (e.g., us-east-1)                              | 
@@ -435,68 +447,78 @@ This file contains all environment-specific parameters:
 | DR_ALB_SSL_CERTIFICATE_ARN      | ARN of DR ALB ACM certificate (empty = auto-create with ACM module)                  |
 | CLOUDFRONT_SSL_CERTIFICATE_ARN  |ACM certificate ARN in us-east-1 for CloudFront (empty = auto-create with ACM module) |
 
-This design ensures:
-- No AWS region values are hard-coded
-- GitHub Actions stays generic
-- Reviewers can deploy the entire system only by editing config.sh
+If you leave any certificate ARN empty, Terraform automatically creates certificates for you.
 
-## 📦 CI/CD (GitHub Actions) Deployment Workflows
+## 🚀 6. Deploy the Multi-Region Infrastructure
 
-This project provides two manually-triggered GitHub Actions workflows located in:
-.github/workflows/
+From GitHub → Actions:
 
-- Deploy Workflow — Deploys the entire multi-region AWS infrastructure
-- Destroy Workflow — Tears down all resources in the correct dependency order
+✔ Go to:
 
-They simply execute the existing deployment scripts:
+Deploy AWS Disaster Recovery → Run workflow
+
+GitHub will automatically:
+
+✓ Assume the IAM role you created
+
+✓ Load config.sh
+
+✓ Mirror the Docker image → ECR (Primary + DR)
+
+✓ Deploy the Primary region
+
+✓ Deploy the DR region
+
+✓ Deploy CloudFront + Route53 global stack
+
+✓ Output WordPress endpoints
+
+Total time: 12–20 minutes
+
+
+### ✓ 🐳 Docker Image Mirroring (Helper Script)
+
+During deployment, the main script:
+
+```bash
 scripts/deployment-automation-scripts/deploy.sh
-scripts/deployment-automation-scripts/destroy.sh
+```
+internally calls the helper script:
+```bash
+scripts/deployment-automation-scripts/pull-docker-hub-to-ecr.sh <aws-region> <environment>
+```
+This helper script is fully automated and:
 
-## 📦 Deploy the Full Multi-Region Architecture
+1. Pulls the WordPress image from Docker Hub defined in config.sh (DOCKERHUB_IMAGE)
+2. Ensures the ECR repository exists (ECR_REPO_NAME)
+3. Tags and pushes the image to:
+```bash
+<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/ecs-wordpress-app:<TAG>
+```
+4. Writes the final ECR image URI to:
+```bash
+scripts/deployment-automation-scripts/runtime/primary-ecr-image-uri
+scripts/deployment-automation-scripts/runtime/dr-ecr-image-uri
+```
+The ECS task definitions in both regions then read the correct image URI from these runtime files, so the reviewer does not need to manage image tags manually.
 
-From the project root, run:
-./scripts/deployment-automation-scripts/deploy.sh
+## 💣 7. Destroy the Infrastructure
 
-✔ What this script does
+From GitHub → Actions:
 
-It automatically performs:
+Destroy AWS Disaster Recovery → Run workflow
 
-- Validates AWS CLI authentication
-- Mirrors WordPress Docker image to ECR (primary + DR)
-- Deploys Primary Region Terraform stack
-- Deploys DR Region Terraform stack
-- Deploys Global Stack (CloudFront, Route53, ACM validation)
+This destroys resources in the correct dependency order:
 
-It internally calls the helper script:
-./scripts/deployment-automation-scripts/push-docker-hub-to-ecr.sh <aws-region> <environment>
+* ECS
+* ALBs
+* RDS
+* VPC
+* CloudFront + Route53
+* Cleanup ECR pushed images
+* Remove runtime state
 
-This helper script:
-
-Pulls the image from Docker Hub
-Creates the ECR repo (if it doesn’t exist)
-Tags & pushes the image to:
-<account>.dkr.ecr.<region>.amazonaws.com/ecs-wordpress-app:<tag>
-Saves the ECR image URI at:
-scripts/deployment-automation-scripts/runtime/<environment>-ecr-image-uri
-
-This makes the deployment process fully automated and region-agnostic.
-
-## 💣 Destroy the Entire Infrastructure
-
-To remove all resources safely, run:
-./scripts/deployment-automation-scripts/destroy.sh
-
-✔ What this script does
-
-Destroys Global Stack
-Destroys DR Region
-Destroys Primary Region
-Cleans runtime metadata in:
-scripts/deployment-automation-scripts/runtime/
-
-Use this only when you want to remove all AWS resources.
-
----
+This ensures a clean teardown with no orphaned resources.
 
 # 🆘 **DR Failover Guide**
 
@@ -528,7 +550,7 @@ Use this only when you want to remove all AWS resources.
 
 ---
 
-# 💰 **Cost Optimization Techniques**
+# 💰 **Cost Optimization**
 
 | Component  | Optimization                                  |
 | ---------- | --------------------------------------------- |
