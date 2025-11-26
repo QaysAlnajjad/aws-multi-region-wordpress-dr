@@ -421,19 +421,19 @@ This file contains all environment-specific parameters:
 
 ✔ Required fields inside config.sh
 
-| Variable                        | Purpose                                     |
-|---------------------------------|---------------------------------------------|
-| PRIMARY_REGION                  | ex: us-east-1                               |
-| DR_REGION                       | ex: ca-central-1                            |
-| TF_STATE_BUCKET_NAME            | Name of S3 remote state bucket              |  
-| TF_STATE_BUCKET_REGION          | Region of S3 remote state bucket            |
-| PRIMARY_DOMAIN                  | 
-| HOSTED_ZONE_ID                  |
-| PRIMARY_MEDIA_S3_BUCKET         |
-| DR_MEDIA_S3_BUCKET              |
-| PRIMARY_ALB_SSL_CERTIFICATE_ARN | 
-| DR_ALB_SSL_CERTIFICATE_ARN      |
-| CLOUDFRONT_SSL_CERTIFICATE_ARN  |
+| Variable                        | Purpose                                                                              |
+|---------------------------------|--------------------------------------------------------------------------------------|
+| PRIMARY_REGION                  | AWS region for the primary deployment (e.g., us-east-1)                              | 
+| DR_REGION                       | AWS region for the DR deployment (e.g., ca-central-1)                                |
+| TF_STATE_BUCKET_NAME            | S3 bucket used for ALL Terraform remote state                                        |
+| TF_STATE_BUCKET_REGION          | Region of the Terraform state bucket                                                 | 
+| PRIMARY_DOMAIN                  | Root domain (e.g., example.com)                                                      |
+| HOSTED_ZONE_ID                  | Route53 hosted zone ID for the domain                                                |
+| PRIMARY_MEDIA_S3_BUCKET         | Name of primary S3 bucket for media                                                  |
+| DR_MEDIA_S3_BUCKET              | Name of DR S3 media bucket                                                           |
+| PRIMARY_ALB_SSL_CERTIFICATE_ARN | RN of primary ALB ACM certificate (empty = auto-create with ACM module)              |
+| DR_ALB_SSL_CERTIFICATE_ARN      | ARN of DR ALB ACM certificate (empty = auto-create with ACM module)                  |
+| CLOUDFRONT_SSL_CERTIFICATE_ARN  |ACM certificate ARN in us-east-1 for CloudFront (empty = auto-create with ACM module) |
 
 This design ensures:
 - No AWS region values are hard-coded

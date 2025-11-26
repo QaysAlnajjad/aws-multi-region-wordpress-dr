@@ -73,7 +73,6 @@ docker push "${TARGET}"
 
 
 mkdir -p scripts/runtime
-
 echo
 echo "SUCCESS: pushed image to ECR:"
 echo "${TARGET}"
