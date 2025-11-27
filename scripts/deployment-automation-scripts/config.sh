@@ -25,14 +25,14 @@ DR_MEDIA_S3_BUCKET="wordpress-media-dr-200"
 ############################################
 #  Domain and hosted zone
 ############################################
-PRIMARY_DOMAIN="qays.cloud" # Primary custom domain without www (e.g., yourdomain.com)
-HOSTED_ZONE_ID="Z03824873AC3XLDK55Q1"
+PRIMARY_DOMAIN="" # Primary custom domain without www (e.g., yourdomain.com)
+HOSTED_ZONE_ID=""
 
 
 ############################################
 #  SSL certificates
 ############################################
-PRIMARY_ALB_SSL_CERTIFICATE_ARN="arn:aws:acm:us-east-1:127214183643:certificate/3da9d899-59ce-43a4-8c85-abca7b5e159f"
+PRIMARY_ALB_SSL_CERTIFICATE_ARN=""
 DR_ALB_SSL_CERTIFICATE_ARN=""
-CLOUDFRONT_SSL_CERTIFICATE_ARN="arn:aws:acm:us-east-1:127214183643:certificate/3da9d899-59ce-43a4-8c85-abca7b5e159f"
+CLOUDFRONT_SSL_CERTIFICATE_ARN=""
 
