@@ -7,28 +7,7 @@ vpc_config = {
     cidr_block = "172.16.0.0/16"    
 }
 
-subnet_config = {
-    Pub-A ={
-        cidr_block = "172.16.0.0/20"
-        availability_zone = local.az_map["A"]
-        map_public_ip_on_launch = true
-    }
-    Pub-B ={
-        cidr_block = "172.16.16.0/20"
-        availability_zone = local.az_map["B"]
-        map_public_ip_on_launch = true
-    }
-    Prv-A ={
-        cidr_block = "172.16.48.0/20"
-        availability_zone = local.az_map["A"]
-        map_public_ip_on_launch = false
-    }
-    Prv-B ={
-        cidr_block = "172.16.64.0/20"
-        availability_zone = local.az_map["B"]
-        map_public_ip_on_launch = false
-    }
-}
+
 
 route_table_config = {
     Public-RT = {

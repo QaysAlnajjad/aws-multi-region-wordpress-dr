@@ -26,6 +26,28 @@ variable "subnet_config" {
         availability_zone = string
         map_public_ip_on_launch = bool
     }))
+    default = {
+      "Pub-A" = {
+        cidr_block = "172.16.0.0/20"
+        availability_zone = local.az_map["A"]
+        map_public_ip_on_launch = true
+      }
+      "Pub-A" = {
+        cidr_block = "172.16.16.0/20"
+        availability_zone = local.az_map["B"]
+        map_public_ip_on_launch = true
+      }
+      "Pub-A" = {
+        cidr_block = "172.16.48.0/20"
+        availability_zone = local.az_map["A"]
+        map_public_ip_on_launch = false
+      }
+      "Pub-A" = {
+        cidr_block = "172.16.64.0/20"
+        availability_zone = local.az_map["B"]
+        map_public_ip_on_launch = false
+      }
+    }
 }
 
 variable "route_table_config" {
