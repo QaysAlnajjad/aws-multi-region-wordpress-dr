@@ -44,7 +44,7 @@ data "terraform_remote_state" "dr_alb" {
 }
 
 module "cert" {
-  count = var.provided_ssl_certificate_arn == "" ? 1 :0
+  count = var.provided_ssl_certificate_arn == "" ? 1 : 0
   source = "../../../modules/acm"
 
   domain_name = var.primary_domain

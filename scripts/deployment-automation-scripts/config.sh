@@ -30,14 +30,14 @@ RDS_IDENTIFIER="wordpress-rds"
 ############################################
 #  Domain and hosted zone
 ############################################
-PRIMARY_DOMAIN="" # Primary custom domain without www (e.g., yourdomain.com)
-HOSTED_ZONE_ID=""
+PRIMARY_DOMAIN="qays.cloud" # Primary custom domain without www (e.g., yourdomain.com)
+HOSTED_ZONE_ID="Z03824873AC3XLDK55Q1"
 
 
 ############################################
 #  SSL certificates
 ############################################
-PRIMARY_ALB_SSL_CERTIFICATE_ARN=""
-DR_ALB_SSL_CERTIFICATE_ARN=""
+PRIMARY_ALB_SSL_CERTIFICATE_ARN="arn:aws:acm:us-east-1:127214183643:certificate/6cf17bfe-0c45-4195-9a30-35265c9a338a"
+DR_ALB_SSL_CERTIFICATE_ARN="arn:aws:acm:us-east-1:127214183643:certificate/6cf17bfe-0c45-4195-9a30-35265c9a338a"
 CLOUDFRONT_SSL_CERTIFICATE_ARN=""
 
