@@ -23,6 +23,11 @@ PRIMARY_MEDIA_S3_BUCKET="wordpress-media-200"
 DR_MEDIA_S3_BUCKET="wordpress-media-dr-200"
 
 ############################################
+#  Media S3 buckets
+############################################
+RDS_IDENTIFIER="wordpress-rds"
+
+############################################
 #  Domain and hosted zone
 ############################################
 PRIMARY_DOMAIN="" # Primary custom domain without www (e.g., yourdomain.com)

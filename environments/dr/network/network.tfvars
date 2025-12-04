@@ -8,24 +8,24 @@ vpc_config = {
 }
 
 subnet_config = {
-    DR-Pub-1A ={
+    DR-Pub-A ={
         cidr_block = "172.16.0.0/20"
-        availability_zone = "ca-central-1a"
+        availability_zone = local.az_map["A"]
         map_public_ip_on_launch = true
     }
-    DR-Pub-1B ={
+    DR-Pub-B ={
         cidr_block = "172.16.16.0/20"
-        availability_zone = "ca-central-1b"
+        availability_zone = local.az_map["B"]
         map_public_ip_on_launch = true
     }
-    DR-Prv-1A ={
+    DR-Prv-A ={
         cidr_block = "172.16.48.0/20"
-        availability_zone = "ca-central-1a"
+        availability_zone = local.az_map["A"]
         map_public_ip_on_launch = false
     }
-    DR-Prv-1B ={
+    DR-Prv-B ={
         cidr_block = "172.16.64.0/20"
-        availability_zone = "ca-central-1b"
+        availability_zone = local.az_map["B"]
         map_public_ip_on_launch = false
     }
 }
@@ -38,10 +38,10 @@ route_table_config = {
                 gateway = true
             }
         }
-        subnets_names = ["DR-Pub-1A", "DR-Pub-1B"]
+        subnets_names = ["DR-Pub-A", "DR-Pub-B"]
     }
     DR-Private-RT = {
-        subnets_names = ["DR-Prv-1A", "DR-Prv-1B"]
+        subnets_names = ["DR-Prv-A", "DR-Prv-B"]
     }
 }
 

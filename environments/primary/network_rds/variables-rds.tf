@@ -1,5 +1,5 @@
 //=============================================================================================================
-//     RDS Variables
+//   RDS Variables
 //=============================================================================================================
 
 variable "rds_security_group_config" {
@@ -24,9 +24,12 @@ variable "rds_security_group_config" {
     }))
 }
 
+variable "rds_identifier" {
+    type = string
+}
+
 variable "rds_config" {
     type = object({
-        identifier = string
         engine_version = string
         instance_class = string 
         multi_az = bool  

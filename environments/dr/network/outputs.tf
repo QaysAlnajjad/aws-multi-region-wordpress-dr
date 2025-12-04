@@ -14,6 +14,3 @@ output "private_subnets_ids" {
     value = module.network.private_subnets_ids
 }
 
-output "subnets" {
-    value = module.network.subnets
-}

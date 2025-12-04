@@ -8,7 +8,7 @@ resource "aws_db_subnet_group" "wordpress" {
 }
 
 resource "aws_db_instance" "rds" {
-  identifier = var.rds.identifier
+  identifier = var.rds_identifier
   engine = "mysql"
   engine_version = var.rds.engine_version
   instance_class = var.rds.instance_class
@@ -46,15 +46,9 @@ EOT
 //==========================================================================================================================================
 
 resource "aws_secretsmanager_secret" "wordpress" {
-  name = "${var.rds.identifier}-wordpress-secret"
+  name = "${var.rds.identifier}-wordpress-db-secret"
   description = "WordPress database credentials"
   recovery_window_in_days = 0
-
-  tags = {
-    Project = "wordpress"
-    Component = "secret"
-  }
-
 }
 
 data "aws_region" "current" {}  

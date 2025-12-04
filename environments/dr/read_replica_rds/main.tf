@@ -19,12 +19,12 @@ data "terraform_remote_state" "primary_rds" {
 
 # Get primary RDS instance info
 data "aws_db_instance" "primary" {
-  db_instance_identifier = "mysql"
+  db_instance_identifier = var.rds_identifier
   provider = aws.primary
 }
 
 resource "aws_db_instance" "read_replica" {
-  identifier = "mysql-dr-replica"
+  identifier = "${var.rds_identifier}-dr-replica"
   
   replicate_source_db = data.aws_db_instance.primary.db_instance_arn
   
@@ -57,7 +57,7 @@ resource "aws_db_subnet_group" "dr" {
 # Security group for RDS
 resource "aws_security_group" "rds_dr" {
   name_prefix = "wordpress-rds-dr-"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
   
   ingress {
     from_port = 3306
@@ -79,7 +79,7 @@ data "aws_secretsmanager_secret_version" "primary_wordpress" {
 
 # Create DR secret with same WordPress credentials
 resource "aws_secretsmanager_secret" "wordpress_dr" {
-  name = "mysql-dr-replica-wordpress-secret"
+  name = "${var.rds_identifier}-dr-replica-wordpress-secret"
   description = "WordPress database credentials for DR"
   recovery_window_in_days = 0
   tags = {

@@ -72,7 +72,6 @@ module "ecs" {
     vpc_id = data.terraform_remote_state.network.outputs.vpc_id    
     private_subnets_ids = data.terraform_remote_state.network.outputs.private_subnets_ids  
     # RDS data           
-    //rds_name = data.terraform_remote_state.rds.outputs.read_replica_rds_name                                                      
     wordpress_secret_arn = data.terraform_remote_state.rds.outputs.wordpress_secret_arn
     # ALB data
     target_group_arn = data.terraform_remote_state.alb.outputs.target_group_arn

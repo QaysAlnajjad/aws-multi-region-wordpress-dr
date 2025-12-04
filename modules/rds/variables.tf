@@ -10,9 +10,12 @@ variable "subnets" {
     type = map(string)
 }
 
+variable "rds_identifier" {
+    type = string
+}
+
 variable "rds" {
     type = object({
-        identifier = string
         # Engine
         engine_version = string
         # Compute & Performance

@@ -45,11 +45,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "wordpress_media" {
   }
 }
 
-# Get current AWS account ID
 data "aws_caller_identity" "current" {}
 
 # Conditional bucket policy builder: CloudFront + ECS role + VPCE (only when values provided)
 locals {
+  /*
   # Accept either full distribution ARNs or just distribution IDs; normalize to ARNs.
   cf_arns = [
     for did in coalesce(var.cloudfront_distribution_arns, []) : (
@@ -75,33 +75,34 @@ locals {
         }
       }
     ]
-  ])
+  ])*/
 
-  # ECS task role statement (if provided)
-  ecs_statement = var.ecs_task_role_arn != "" ? [
+
+  cloudfront_statement = (
+    var.cloudfront_media_distribution_arn != ""
+  ) ? [
     {
-      Sid = "AllowEcsTaskRoleAccess"
+      Sid = "AllowCloudFrontGetObject-${replace(var.cloudfront_media_distribution_arn, ":", "-")}"
       Effect = "Allow"
-      Principal = { AWS = var.ecs_task_role_arn }
-      Action = [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject",
-        "s3:ListBucket"
-      ]
-      Resource = [
-        aws_s3_bucket.wordpress_media.arn,
-        "${aws_s3_bucket.wordpress_media.arn}/*"
-      ]
+      Principal = { Service = "cloudfront.amazonaws.com" }
+      Action = ["s3:GetObject"]
+      Resource = "${aws_s3_bucket.wordpress_media.arn}/*"
+      Condition = {
+        StringEquals = {
+          "AWS:SourceArn" = var.cloudfront_media_distribution_arn
+          "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
+        }
+      }
     }
   ] : []
 
-  # VPCE statement (if provided) — use the correct variable name
-  vpce_statement = var.s3_vpc_endpoint_id != "" ? [
+  ecs_vpce_statement = (
+    var.ecs_task_role_arn != "" && var.s3_vpc_endpoint_id != ""
+  ) ? [
     {
-      Sid = "AllowVPCEAccess"
+      Sid    = "AllowEcsViaVpce"
       Effect = "Allow"
-      Principal = "*"
+      Principal = { AWS = var.ecs_task_role_arn }
       Action = [
         "s3:GetObject",
         "s3:PutObject",
@@ -121,7 +122,8 @@ locals {
   ] : []
 
   # Final combined statements for the bucket policy
-  statements = concat(local.cloudfront_statement, local.ecs_statement, local.vpce_statement)
+  statements = concat(local.cloudfront_statement, local.ecs_vpce_statement)
+
 }
 
 resource "aws_s3_bucket_policy" "wordpress_media" {

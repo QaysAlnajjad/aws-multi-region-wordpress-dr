@@ -25,6 +25,7 @@ declare -A STACK_VARS
 STACK_VARS["global/iam"]="\
   -var primary_region=$PRIMARY_REGION \
   -var dr_region=$DR_REGION \
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var primary_media_s3_bucket=$PRIMARY_MEDIA_S3_BUCKET \
   -var dr_media_s3_bucket=$DR_MEDIA_S3_BUCKET"
 
@@ -33,9 +34,10 @@ STACK_VARS["global/oac"]=""
 
 # PRIMARY NETWORK + RDS
 STACK_VARS["primary/network_rds"]="\
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
-  -var-file=network_rds.tfvars"
+  -var-file=network_rds.tfvars" 
 
 # DR NETWORK
 STACK_VARS["dr/network"]="-var-file=network.tfvars"
@@ -55,9 +57,9 @@ STACK_VARS["primary/alb"]="\
 
 # DR Read Replica RDS
 STACK_VARS["dr/read_replica_rds"]="\
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION" 
-  
 
 # DR S3
 STACK_VARS["dr/s3"]="\
@@ -129,11 +131,6 @@ deploy_stack "dr/s3"
 deploy_stack "dr/alb"
 deploy_stack "global/cdn_dns"
 
-# Build CloudFront ARNs
-MEDIA_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw media_distribution_arn)
-APP_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw app_distribution_arn 2>/dev/null || echo "")
-CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" --arg a "$APP_ARN" '[ $m, $a ] | map(select(. != ""))')
-
 echo "Pushing Docker images to ECR..."
 ./scripts/deployment-automation-scripts/pull-docker-hub-to-ecr.sh $PRIMARY_REGION "primary"
 ./scripts/deployment-automation-scripts/pull-docker-hub-to-ecr.sh $DR_REGION "dr"
@@ -148,12 +145,22 @@ deploy_stack "primary/ecs"
 deploy_stack "dr/ecs"
 
 # Update S3 bucket policy after ECS
-S3_VPC_ENDPOINT_ID=$(terraform -chdir="environments/primary/ecs" output -raw s3_vpc_endpoint_id)
+MEDIA_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw media_distribution_arn)
+# APP_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw app_distribution_arn 2>/dev/null || echo "")
+# CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" --arg a "$APP_ARN" '[ $m, $a ] | map(select(. != ""))')
+# CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" '[ $m ]')
+PRIMARY_S3_VPC_ENDPOINT_ID=$(terraform -chdir="environments/primary/ecs" output -raw s3_vpc_endpoint_id)
+DR_S3_VPC_ENDPOINT_ID=$(terraform -chdir="environments/dr/ecs" output -raw s3_vpc_endpoint_id)
 STACK_VARS["primary/s3"]+=" \
-  -var cloudfront_distribution_arns=$CF_ARNS_JSON \
+  -var cloudfront_media_distribution_arn=$MEDIA_ARN \
   -var ecs_task_role_arn=$ECS_ROLE_ARN \
-  -var s3_vpc_endpoint_id=$S3_VPC_ENDPOINT_ID"
+  -var s3_vpc_endpoint_id=$PRIMARY_S3_VPC_ENDPOINT_ID"
+STACK_VARS["dr/s3"]+=" \
+  -var cloudfront_media_distribution_arn=$MEDIA_ARN \
+  -var ecs_task_role_arn=$ECS_ROLE_ARN \
+  -var s3_vpc_endpoint_id=$DR_S3_VPC_ENDPOINT_ID" 
 
 deploy_stack "primary/s3"
+deploy_stack "dr/s3"
 
 echo "🎉 Deployment complete!"

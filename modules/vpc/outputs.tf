@@ -12,14 +12,14 @@ output "vpc_cidr" {                                             # to be referenc
 
 output "private_subnets_ids" {                                  # used for Secrets Manager endpoint, Lambda, ECS tasks, VPC endpoints
   value = [ for k, v in aws_subnet.main : v.id 
-            if contains(["Prv-1A", "Prv-1B", "DR-Prv-1A", "DR-Prv-1B"], k) ]
+            if v.map_public_ip_on_launch == false ]
 }
 
 output "public_subnets_ids" {                                   # used in ALB
   value = [ for k, v in aws_subnet.main : v.id 
-            if v.map_public_ip_on_launch == true  ]
+            if v.map_public_ip_on_launch == true ]
 }
 
-output "subnets" {                                              # Used in RDS subnet group, Bastion host
+output "subnets" {                                              # Used in RDS subnet group
   value = { for k, v in aws_subnet.main : k => v.id }
 }

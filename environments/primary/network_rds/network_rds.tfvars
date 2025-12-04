@@ -8,24 +8,24 @@ vpc_config = {
 }
 
 subnet_config = {
-    Pub-1A ={
+    Pub-A ={
         cidr_block = "172.16.0.0/20"
-        availability_zone = "us-east-1a"
+        availability_zone = local.az_map["A"]
         map_public_ip_on_launch = true
     }
-    Pub-1B ={
+    Pub-B ={
         cidr_block = "172.16.16.0/20"
-        availability_zone = "us-east-1b"
+        availability_zone = local.az_map["B"]
         map_public_ip_on_launch = true
     }
-    Prv-1A ={
+    Prv-A ={
         cidr_block = "172.16.48.0/20"
-        availability_zone = "us-east-1a"
+        availability_zone = local.az_map["A"]
         map_public_ip_on_launch = false
     }
-    Prv-1B ={
+    Prv-B ={
         cidr_block = "172.16.64.0/20"
-        availability_zone = "us-east-1b"
+        availability_zone = local.az_map["B"]
         map_public_ip_on_launch = false
     }
 }
@@ -38,11 +38,11 @@ route_table_config = {
                 gateway = true
             }
         }
-        subnets_names = ["Pub-1A", "Pub-1B"]
+        subnets_names = ["Pub-A", "Pub-B"]
     }
     Private-RT = {
         routes = {}
-        subnets_names = ["Prv-1A", "Prv-1B"]
+        subnets_names = ["Prv-A", "Prv-B"]
     }
 }
 
@@ -94,14 +94,13 @@ rds_security_group_config = {
 }
 
 rds_config = {
-    identifier = "mysql"
     engine_version = "8.0"
     instance_class = "db.t3.micro"
     username = "dbadmin"        # Replace with your DB admin username
     db_username = "dbuser"      # Replace with your DB username
     db_name = "wordpressDB" 
     multi_az = false
-    subnets_names = ["Prv-1A", "Prv-1B"]
+    subnets_names = ["Prv-A", "Prv-B"]
     security_group_name = "RDS-SG"
 }
 

@@ -44,5 +44,6 @@ module "rds" {
   secretsmanager_endpoint_sg_name = var.secretsmanager_endpoint_sg_name
   lambda_security_group_name = var.lambda_security_group_name
   # RDS configuration
+  rds_identifier = var.rds_identifier
   rds = var.rds_config
 }

@@ -25,8 +25,10 @@ All infrastructure is 100% managed using **Terraform**, following AWS **Well-Arc
 * [Terraform Structure](#terraform-structure)
 * [Reviewer Setup (How to Deploy This Project in Your AWS Account)](#reviewer-setup-how-to-deploy-this-project-in-your-aws-account)
 * [DR Failover Guide](#dr-failover-guide)
+* [CloudWatch Monitoring and Alarms](#cloudwatch-monitoring-and-alarms)
 * [Security Best Practices Used](#security-best-practices-used)
 * [Cost Optimization](#cost-optimization)
+* [Known Limitations and Trade-offs](#known-limitations-and-trade-offs)
 * [License](#license)
 
 ---
@@ -344,6 +346,15 @@ This structure prevents dependency cycles and allows independent region deployme
 
 ---
 
+## Cross-Stack Dependency Map
+
+This project uses multiple Terraform stacks.  
+A detailed diagram of how stack outputs flow between stacks is available here:
+
+👉 [Cross-Stack Variable Flow](docs/cross-stack-flow.md)
+
+--- 
+
 # 📘 **Reviewer Setup (How to Deploy This Project in Your AWS Account)** 
 
 This section explains exactly how to deploy and test the full multi-region WordPress DR architecture in your own AWS account, with no AWS access keys and no manual Terraform commands (after bootstrap).
@@ -520,6 +531,8 @@ This destroys resources in the correct dependency order:
 
 This ensures a clean teardown with no orphaned resources.
 
+---
+
 # 🆘 **DR Failover Guide**
 
 ### Automatic:
@@ -534,6 +547,49 @@ This ensures a clean teardown with no orphaned resources.
 2. Scale ECS tasks in DR region
 3. Update S3 write origin (only if primary S3 is down)
 4. Post-incident: re-establish replication. After the primary region is restored, the old primary RDS instance must be replaced and a new cross-region read replica must be created to re-establish multi-region replication.
+
+---
+
+# 📊 **CloudWatch Monitoring and Alarms**
+
+This project implements centralized observability using Amazon CloudWatch.
+Both the application (ECS) layer and the automation layer (Lambda) are instrumented with log groups and health-monitoring alarms.
+
+✔ ECS Logging
+
+Each ECS task writes logs to a dedicated CloudWatch Log Group:
+* Log group name pattern:
+"/ecs/<task-family-name>"
+* Logs retained for 7 days
+* Automatically created for each ECS task definition via Terraform
+
+This provides container-level logs for debugging application issues, deployment behavior, or failover events.
+
+✔ ECS Health Alarm (via ALB Target Group)
+
+To ensure service health and detect issues early, a CloudWatch alarm is configured for the Application Load Balancer (ALB) Target Group:
+* Alarm name: wordpress-health-alarm
+* Metric: HealthyHostCount (AWS/ApplicationELB)
+* Trigger:
+  * Alarm fires when healthy container count drops below 2
+  * Metric evaluated every 60 seconds
+  * treat_missing_data = "breaching" ensures that missing ALB metrics during failure also trigger the alarm
+* Dimensions:
+  * TargetGroup ARN suffix
+  * LoadBalancer ARN suffix
+* Purpose:
+ * Detects failing ECS tasks or unhealthy containers behind the ALB, enabling early detection of service degradation
+
+✔ Lambda Execution Logging
+
+The database-initialization Lambda function (wordpress-db-setup) includes full log coverage:
+* Log group:
+  * "/aws/lambda/wordpress-db-setup"
+* Log retention: 7 days
+* All Lambda execution output (including errors, DB setup output, Secrets Manager interactions) is logged
+* Logs assist in debugging database bootstrap, credential provisioning, and RDS post-creation automation
+
+Additionally, a Terraform null_resource triggers the Lambda function immediately after creation to ensure DB setup runs automatically.
 
 ---
 
@@ -552,15 +608,132 @@ This ensures a clean teardown with no orphaned resources.
 
 # 💰 **Cost Optimization**
 
-| Component  | Optimization                                  |
-| ---------- | --------------------------------------------- |
-| ECS        | 1-task warm standby DR cluster                |
-| RDS        | Single read-replica instead of Multi-AZ + CRR |
-| NAT        | VPC endpoints reduce NAT usage                |
-| CloudFront | PriceClass for region control                 |
-| S3         | Only one write bucket (primary)               |
+This architecture follows a Warm Standby DR model to significantly reduce multi-region cloud expenses.
+
+Primary Region (Active) — Estimated Monthly Cost
+| Component  | Service                              | Approx Monthly Cost       |
+| ---------- |--------------------------------------|---------------------------|
+| Compute    | ECS Fargate tasks (1–2 tasks)        | $40–$80                   |
+| Database   | RDS MySQL (db.t3.medium)             | $120–$150                 |  
+| Storage    | S3 buckets + backups                 | $5–$15                    |
+| Networking | ALB + VPC Endpoints (No NAT Gateway) | $7-$20                    |
+| Traffic    | CloudFront distribution              | $10-$30                   |
+| Monitoring | CloudWatch metrics, logs & alarms    | $5-$10                    |
+
+Total Primary Region:
+👉 $187–$305 per month
+
+DR Region (Warm Standby) — Estimated Monthly Cost
+| Component       | Service                              | Cost Behavior           | Approx Monthly Cost       |
+| --------------- |--------------------------------------|-------------------------|---------------------------|
+| Compute         | ECS Fargate tasks                    | Scaled to 0 (normal)    | $0                        |
+| Database        | RDS cross-region read replica        | reqiured                | $120–$150                 |  
+| Storage         | S3 replication target                | Minimal                 | $3-$10                    |
+| Networking      | ALB + VPC Endpoints (No NAT Gateway) | Low                     | $18-$30                   |
+| Traffic         | CloudFront distribution              | Shared                  | $0                        |
+| Logs/Monitoring | CloudWatch                           | Small volume            | $3-$6                     |
+Note:
+ECS tasks in the DR region are scaled to zero during normal operation.
+They scale up to two tasks only during a failover event, so DR compute cost is effectively zero until activation.
+
+Total DR Region:
+👉 $145–$196 per month
+
+Total Multi-Region Cost
+Primary ($187–$305) + DR ($145–$196)
+👉 Estimated Total: $332–$501 per month
 
 ---
+
+# ⚠️ **Known Limitations and Trade-offs**
+
+This project implements a realistic multi-region DR (Disaster Recovery) architecture using a Warm Standby strategy. While effective and cost-efficient, it includes several intentional trade-offs and limitations that are important to understand.
+
+1. Manual RDS Failover (Replica Promotion)
+
+* The cross-region RDS replica does not automatically become primary.
+* In a region-wide failure, an operator must manually promote the read replica in the DR region.
+* This introduces a small delay (RTO) until the database becomes writable again.
+
+Trade-off:
+Automatic failover reduces downtime but increases complexity and cost. Manual promotion is simpler and appropriate for warm-standby DR.
+
+2. RDS Replication Lag (RPO > 0)
+
+* Cross-region MySQL replication introduces replication lag of seconds to minutes depending on load.
+* During failover, the DR region may lose very recent writes.
+
+Trade-off:
+Achieving zero data loss requires synchronous replication or multi-master setups, which are significantly more expensive.
+
+3. ECS DR Cluster is Warm, Not Active
+
+* ECS tasks in the DR region are scaled down to 0 (or minimal) until failover.
+* A failover event requires scaling ECS services up, which adds delay before full recovery.
+
+Trade-off:
+Warm standby reduces cost by 50–70% compared to active-active multi-region setups.
+
+4. Route 53 Failover Does Not Validate Database Layer
+
+* Route 53 health checks validate the ALB/ECS layer, not database availability.
+* If the ALB is healthy but RDS is not, application errors may still occur.
+
+Trade-off:
+End-to-end health checking requires custom Lambda health endpoints or multi-layer monitoring, which increases complexity.
+
+5. Lambda Automation Runs Once (Bootstrap Only)
+
+* The DB setup Lambda runs only during initial deployment.
+* Schema migrations or future DB updates must be handled manually or using a CI/CD process.
+
+Trade-off:
+Automating migrations adds complexity (Liquibase, Flyway, custom pipelines), so bootstrap-only logic keeps the project simple.
+
+6. S3 Replication Provides Eventual Consistency
+
+* S3 Cross-Region Replication (CRR) is asynchronous.
+* Media files may take seconds or minutes to appear in the DR region after upload.
+
+Trade-off:
+Fully synchronous replication for media storage is expensive and not supported natively by S3.
+
+7. Failover Decision Is Operator-Driven
+
+* This DR design intentionally avoids auto-failover to prevent false positives.
+* Failover requires human confirmation.
+
+Trade-off:
+Auto-failover is fast but risks flipping regions due to transient issues. Warm-standby DR normally uses controlled manual failover.
+
+8. No Fully Automated DR Drills
+
+* Disaster Recovery drills (regional failure simulations) must be executed manually.
+* Automated DR testing pipelines are not included.
+
+Trade-off:
+Automation adds complexity; manual testing remains common in warm standby setups.
+
+9. DR ALB Always Running
+
+* The DR region's ALB is always provisioned to allow immediate failover.
+* This introduces a small fixed cost even when the region is idle.
+
+Trade-off:
+Keeping the ALB "cold" would save money but increases RTO (longer DR recovery time).
+
+Summary
+
+These trade-offs make the solution:
+Reliable
+Realistic
+Cost-effective
+
+Aligned with AWS Well-Architected DR patterns (Warm Standby)
+
+But they also mean the system is not active-active and sacrifices some speed and automation in exchange for simplicity and affordability.
+
+--- 
 
 # 📄 **License**
 

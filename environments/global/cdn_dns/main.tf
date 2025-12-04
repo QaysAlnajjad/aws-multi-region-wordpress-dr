@@ -51,7 +51,6 @@ module "cert" {
   subject_alternative_names = ["www.${var.primary_domain}"]
   hosted_zone_id = var.hosted_zone_id
   environment = "CDN"
-
 }
 
 module "cdn_dns" {

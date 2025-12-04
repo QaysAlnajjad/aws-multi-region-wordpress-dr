@@ -1,13 +1,7 @@
 alb_security_group_config = {
     ALB-SG = {
-        ingress = {/*
-            https_cloudfront = {
-                from_port = 443
-                to_port = 443
-                ip_protocol = "tcp"
-                prefix_list_ids = ["pl-3b927c52"]
-            }*/
-            https_admin = { 
+        ingress = {
+            https_access = { 
                 from_port = 443
                 to_port = 443
                 ip_protocol = "tcp"

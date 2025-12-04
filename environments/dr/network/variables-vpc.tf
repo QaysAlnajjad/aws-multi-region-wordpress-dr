@@ -2,6 +2,17 @@
 //     Network Variables
 //=============================================================================================================
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+locals {
+  az_map = {
+    "A" = data.aws_availability_zones.available.names[0]
+    "B" = data.aws_availability_zones.available.names[1]
+  }
+}
+
 variable "vpc_config" {
     type = object({
         name = string

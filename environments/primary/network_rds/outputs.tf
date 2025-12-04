@@ -18,13 +18,6 @@ output "public_subnets_ids" {
     value = module.network.public_subnets_ids
 }
 
-
-
-
-output "rds_name" {
-    value = module.rds.rds_name
-}
-
 output "wordpress_secret_arn" {
     value = module.rds.wordpress_secret_arn
 }
