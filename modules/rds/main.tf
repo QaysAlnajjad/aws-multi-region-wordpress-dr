@@ -46,7 +46,7 @@ EOT
 //==========================================================================================================================================
 
 resource "aws_secretsmanager_secret" "wordpress" {
-  name = "${var.rds_identifier}-wordpress-db-secret"
+  name = "${var.rds_identifier}-secret"
   description = "WordPress database credentials"
   recovery_window_in_days = 0
 }

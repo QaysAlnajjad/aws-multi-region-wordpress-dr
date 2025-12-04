@@ -19,7 +19,7 @@ ECR_REPO_NAME="ecs-wordpress-app"
 ############################################
 #  Media S3 buckets
 ############################################
-PRIMARY_MEDIA_S3_BUCKET="wordpress-media-200"
+PRIMARY_MEDIA_S3_BUCKET="wordpress-media-primary-200"
 DR_MEDIA_S3_BUCKET="wordpress-media-dr-200"
 
 ############################################
