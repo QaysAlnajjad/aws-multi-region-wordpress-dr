@@ -7,8 +7,6 @@ vpc_config = {
     cidr_block = "172.16.0.0/16"    
 }
 
-
-
 route_table_config = {
     Public-RT = {
         routes = {
