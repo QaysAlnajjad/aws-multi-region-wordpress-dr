@@ -74,7 +74,7 @@ resource "aws_security_group" "rds_dr" {
 # Get primary WordPress secret to copy credentials
 data "aws_secretsmanager_secret_version" "primary_wordpress" {
   provider = aws.primary
-  secret_id = data.terraform_remote_state.primary_rds.outputs.wordpress_secret_arn
+  secret_id = data.terraform_remote_state.primary_rds.outputs.wordpress_secret_id
 }
 
 # Create DR secret with same WordPress credentials
