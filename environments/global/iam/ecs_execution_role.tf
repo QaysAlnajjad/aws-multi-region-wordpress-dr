@@ -32,8 +32,8 @@ module "ecs_execution" {
         "secretsmanager:DescribeSecret"
       ]
       Resource = [
-        "arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-wordpress-secret*",
-        "arn:aws:secretsmanager:${var.dr_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-dr-replica-wordpress-secret*"
+        "arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-secret*",
+        "arn:aws:secretsmanager:${var.dr_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-dr-replica-secret*"
       ]
     },
     {

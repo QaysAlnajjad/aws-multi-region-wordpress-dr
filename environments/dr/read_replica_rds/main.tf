@@ -79,7 +79,7 @@ data "aws_secretsmanager_secret_version" "primary_wordpress" {
 
 # Create DR secret with same WordPress credentials
 resource "aws_secretsmanager_secret" "wordpress_dr" {
-  name = "${var.rds_identifier}-dr-replica-wordpress-secret"
+  name = "${var.rds_identifier}-dr-replica-secret"
   description = "WordPress database credentials for DR"
   recovery_window_in_days = 0
   tags = {
