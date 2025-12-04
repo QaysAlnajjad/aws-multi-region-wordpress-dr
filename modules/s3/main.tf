@@ -129,7 +129,7 @@ locals {
 resource "aws_s3_bucket_policy" "wordpress_media" {
   count  = length(local.statements) > 0 ? 1 : 0
   
-  bucket = aws_s3_bucket.wordpress_media.arn
+  bucket = aws_s3_bucket.wordpress_media.name
 
   policy = jsonencode({
     Version = "2012-10-17"
