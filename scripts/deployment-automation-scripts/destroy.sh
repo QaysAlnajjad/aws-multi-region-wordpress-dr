@@ -40,6 +40,7 @@ declare -A STACK_VARS
 STACK_VARS["global/iam"]="\
   -var primary_region=$PRIMARY_REGION \
   -var dr_region=$DR_REGION \
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var primary_media_s3_bucket=$PRIMARY_MEDIA_S3_BUCKET \
   -var dr_media_s3_bucket=$DR_MEDIA_S3_BUCKET"
 
@@ -50,6 +51,7 @@ STACK_VARS["global/oac"]=""
 STACK_VARS["primary/network_rds"]="\
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var-file=network_rds.tfvars"
 
 # DR NETWORK
@@ -69,6 +71,7 @@ STACK_VARS["primary/alb"]="\
 
 # DR Read Replica RDS
 STACK_VARS["dr/read_replica_rds"]="
+  -var rds_identifier=$RDS_IDENTIFIER \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 
