@@ -3,7 +3,7 @@
 //==========================================================================================================================================
 
 resource "aws_db_subnet_group" "wordpress" {
-  name = "${var.rds.identifier}-subnet-group"
+  name = "${var.rds_identifier}-subnet-group"
   subnet_ids = [for subnet_name in var.rds.subnets_names : var.subnets[subnet_name]]
 }
 
@@ -46,7 +46,7 @@ EOT
 //==========================================================================================================================================
 
 resource "aws_secretsmanager_secret" "wordpress" {
-  name = "${var.rds.identifier}-wordpress-db-secret"
+  name = "${var.rds_identifier}-wordpress-db-secret"
   description = "WordPress database credentials"
   recovery_window_in_days = 0
 }
@@ -112,7 +112,7 @@ resource "aws_lambda_function" "lambda" {
   environment {
     variables = {
       MASTER_SECRET_ARN = aws_db_instance.rds.master_user_secret[0].secret_arn
-      WORDPRESS_SECRET_NAME = "${var.rds.identifier}-wordpress-secret"
+      WORDPRESS_SECRET_NAME = "${var.rds_identifier}-wordpress-secret"
       DB_HOST = split(":", aws_db_instance.rds.endpoint)[0]
       DB_PORT = tostring(aws_db_instance.rds.port)
       WORDPRESS_DB_NAME  = var.rds.db_name
