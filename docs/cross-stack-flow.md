@@ -29,6 +29,7 @@
 │   • vpc_cidr ───────────────────────────────┼─────▶ used by primary/alb
 │   • private_subnets_ids ────────────────────┼─────▶ used by primary/ecs
 |   • public_subnets_ids ─────────────────────┼─────▶ used by primary/alb               
+|   • wordpress_secret_id ────────────────────┼─────▶ used by dr/read_replica_rds
 |   • wordpress_secret_arn ───────────────────┼─────▶ used by primary/ecs
 └─────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────┐
