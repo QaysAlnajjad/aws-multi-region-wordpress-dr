@@ -135,6 +135,14 @@ destroy_stack() {
 # DESTROY ORDER
 # -----------------------------
 
+echo "🧹 Removing DB bootstrap Lambda to shorten teardown time..."
+terraform -chdir="environments/primary/network_rds" destroy \
+  -target=aws_lambda_function.lambda \
+  -target=aws_cloudwatch_log_group.lambda_logs \
+  -target=null_resource.invoke_lambda_after_creation \
+  -target=null_resource.tag_rds_master_secret \
+  -auto-approve || true
+
 destroy_stack "dr/ecs"
 destroy_stack "primary/ecs"
 
