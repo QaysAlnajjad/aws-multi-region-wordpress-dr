@@ -37,7 +37,7 @@ resource "aws_s3_bucket_replication_configuration" "primary_to_dr" {
     status = "Enabled"
 
     destination {
-      bucket = module.s3.bucket_arn
+      bucket = module.s3.bucket_name
     }
   }
 
