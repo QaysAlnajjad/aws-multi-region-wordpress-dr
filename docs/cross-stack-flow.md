@@ -49,6 +49,7 @@
 │  OUTPUTS:                                   │
 |   • bucket_name ────────────────────────────┼─────▶ used by dr/s3, primary/ecs
 │   • bucket_regional_domain_name ────────────┼─────▶ used by global/cdn_dns
+|   • bucket_arn ─────────────────────────────┼─────▶ used by dr/s3 
 └─────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────┐
 │                 primary/alb                 │
