@@ -44,7 +44,7 @@ module "lambda_db_setup" {
         "secretsmanager:PutSecretValue",
         "secretsmanager:DescribeSecret"
       ]
-      Resource = ["arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-wordpress-secret*"],
+      Resource = ["arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:${var.rds_identifier}-secret*"],
     },
 
     # VPC Networking for Lambda
