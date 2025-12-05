@@ -39,15 +39,6 @@ data "terraform_remote_state" "iam" {
   }    
 }
 
-data "terraform_remote_state" "s3" {
-  backend = "s3"
-  config = {
-    bucket = var.state_bucket_name
-    key = "environments/primary/s3/terraform.tfstate"
-    region = var.state_bucket_region
-  }  
-}
-
 data "terraform_remote_state" "cdn_dns" {
   backend = "s3"
   config = {
@@ -69,7 +60,7 @@ module "ecs" {
     target_group_arn_suffix = data.terraform_remote_state.alb.outputs.target_group_arn_suffix 
     load_balancer_arn_suffix = data.terraform_remote_state.alb.outputs.alb_arn_suffix
     # Storage & CDN
-    s3_bucket_name = data.terraform_remote_state.s3.outputs.bucket_name
+    s3_bucket_name = var.primary_s3_bucket_name
     primary_domain = var.primary_domain
     cloudfront_distribution_id = data.terraform_remote_state.cdn_dns.outputs.media_distribution_id
     cloudfront_media_domain = data.terraform_remote_state.cdn_dns.outputs.media_distribution_domain

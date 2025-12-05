@@ -148,9 +148,6 @@ deploy_stack "dr/ecs"
 
 # Update S3 bucket policy after ECS
 MEDIA_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw media_distribution_arn)
-# APP_ARN=$(terraform -chdir="environments/global/cdn_dns" output -raw app_distribution_arn 2>/dev/null || echo "")
-# CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" --arg a "$APP_ARN" '[ $m, $a ] | map(select(. != ""))')
-# CF_ARNS_JSON=$(jq -nc --arg m "$MEDIA_ARN" '[ $m ]')
 PRIMARY_S3_VPC_ENDPOINT_ID=$(terraform -chdir="environments/primary/ecs" output -raw s3_vpc_endpoint_id)
 DR_S3_VPC_ENDPOINT_ID=$(terraform -chdir="environments/dr/ecs" output -raw s3_vpc_endpoint_id)
 STACK_VARS["primary/s3"]+=" \

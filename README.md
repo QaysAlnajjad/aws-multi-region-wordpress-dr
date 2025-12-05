@@ -247,7 +247,7 @@ Primary ALB → DR ALB
 
 Triggers failover on:
 
-* 5xx errors
+* error 5xx
 * Timeout
 * ALB unreachable
 * Security group or NACL issues
@@ -444,19 +444,19 @@ Open:
 scripts/deployment-automation-scripts/config.sh
 ```
 Edit values to match your AWS environment:
-| Variable                        | Purpose                                                                              |
-|---------------------------------|--------------------------------------------------------------------------------------|
-| PRIMARY_REGION                  | AWS region for the primary deployment (e.g., us-east-1)                              | 
-| DR_REGION                       | AWS region for the DR deployment (e.g., ca-central-1)                                |
-| TF_STATE_BUCKET_NAME            | S3 bucket used for ALL Terraform remote state                                        |
-| TF_STATE_BUCKET_REGION          | Region of the Terraform state bucket                                                 | 
-| PRIMARY_DOMAIN                  | Root domain (e.g., example.com)                                                      |
-| HOSTED_ZONE_ID                  | Route53 hosted zone ID for the domain                                                |
-| PRIMARY_MEDIA_S3_BUCKET         | Name of primary S3 bucket for media                                                  |
-| DR_MEDIA_S3_BUCKET              | Name of DR S3 media bucket                                                           |
-| PRIMARY_ALB_SSL_CERTIFICATE_ARN | RN of primary ALB ACM certificate (empty = auto-create with ACM module)              |
-| DR_ALB_SSL_CERTIFICATE_ARN      | ARN of DR ALB ACM certificate (empty = auto-create with ACM module)                  |
-| CLOUDFRONT_SSL_CERTIFICATE_ARN  |ACM certificate ARN in us-east-1 for CloudFront (empty = auto-create with ACM module) |
+| Variable                        | Purpose                                                                               |
+|---------------------------------|---------------------------------------------------------------------------------------|
+| PRIMARY_REGION                  | AWS region for the primary deployment (e.g., us-east-1)                               | 
+| DR_REGION                       | AWS region for the DR deployment (e.g., ca-central-1)                                 |
+| TF_STATE_BUCKET_NAME            | S3 bucket used for ALL Terraform remote state                                         |
+| TF_STATE_BUCKET_REGION          | Region of the Terraform state bucket                                                  | 
+| PRIMARY_DOMAIN                  | Root domain (e.g., example.com)                                                       |
+| HOSTED_ZONE_ID                  | Route53 hosted zone ID for the domain                                                 |
+| PRIMARY_MEDIA_S3_BUCKET         | Name of primary S3 bucket for media                                                   |
+| DR_MEDIA_S3_BUCKET              | Name of DR S3 media bucket                                                            |
+| PRIMARY_ALB_SSL_CERTIFICATE_ARN | RN of primary ALB ACM certificate (empty = auto-create with ACM module)               |
+| DR_ALB_SSL_CERTIFICATE_ARN      | ARN of DR ALB ACM certificate (empty = auto-create with ACM module)                   |
+| CLOUDFRONT_SSL_CERTIFICATE_ARN  | ACM certificate ARN in us-east-1 for CloudFront (empty = auto-create with ACM module) |
 
 If you leave any certificate ARN empty, Terraform automatically creates certificates for you.
 
@@ -484,7 +484,7 @@ GitHub will automatically:
 
 ✓ Output WordPress endpoints
 
-Total time: 12–20 minutes
+Total time: 20–30 minutes
 
 
 ### ✓ 🐳 Docker Image Mirroring (Helper Script)

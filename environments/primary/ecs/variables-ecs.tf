@@ -56,6 +56,11 @@ variable "vpc_endpoints_config" {
   }))
 }
 
+variable "primary_s3_bucket_name" {
+  type = string
+}
+
 variable "primary_domain" {
   type = string
 }
+
