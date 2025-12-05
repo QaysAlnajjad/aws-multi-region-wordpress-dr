@@ -32,8 +32,8 @@ resource "aws_db_instance" "read_replica" {
   instance_class = "db.t3.micro"
   
   # Network configuration
-  db_subnet_group_name = aws_db_subnet_group.dr.name
-  vpc_security_group_ids = [aws_security_group.rds_dr.id]
+  db_subnet_group_name = aws_db_subnet_group.rr.name
+  vpc_security_group_ids = [aws_security_group.rr.id]
   
   # Read replicas inherit most settings from source
   skip_final_snapshot = true
@@ -45,7 +45,7 @@ resource "aws_db_instance" "read_replica" {
 }
 
 # Subnet group for DR
-resource "aws_db_subnet_group" "dr" {
+resource "aws_db_subnet_group" "rr" {
   name = "wordpress-dr-subnet-group"
   subnet_ids = data.terraform_remote_state.network.outputs.private_subnets_ids
   
@@ -55,7 +55,7 @@ resource "aws_db_subnet_group" "dr" {
 }
 
 # Security group for RDS
-resource "aws_security_group" "rds_dr" {
+resource "aws_security_group" "rr" {
   name_prefix = "wordpress-rds-dr-"
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
   
@@ -78,24 +78,20 @@ data "aws_secretsmanager_secret_version" "primary_wordpress" {
 }
 
 # Create DR secret with same WordPress credentials
-resource "aws_secretsmanager_secret" "wordpress_dr" {
+resource "aws_secretsmanager_secret" "rr" {
   name = "${var.rds_identifier}-dr-replica-secret"
   description = "WordPress database credentials for DR"
   recovery_window_in_days = 0
-  tags = {
-    Project = "wordpress"
-    Component = "secret"
-  }
 }
 
 # Store same WordPress credentials but with DR database host
-resource "aws_secretsmanager_secret_version" "wordpress_dr" {
-  secret_id = aws_secretsmanager_secret.wordpress_dr.id
+resource "aws_secretsmanager_secret_version" "rr" {
+  secret_id = aws_secretsmanager_secret.rr.id
   secret_string = jsonencode({
     username = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).username
     password = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).password
-    dbname   = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).dbname
-    host     = split(":", aws_db_instance.read_replica.endpoint)[0]
-    port     = aws_db_instance.read_replica.port
+    dbname = jsondecode(data.aws_secretsmanager_secret_version.primary_wordpress.secret_string).dbname
+    host = split(":", aws_db_instance.read_replica.endpoint)[0]
+    port = aws_db_instance.read_replica.port
   })
 }
