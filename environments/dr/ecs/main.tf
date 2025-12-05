@@ -69,7 +69,7 @@ module "ecs" {
     target_group_arn_suffix = data.terraform_remote_state.alb.outputs.target_group_arn_suffix
     load_balancer_arn_suffix = data.terraform_remote_state.alb.outputs.alb_arn_suffix
     # Storage & CDN
-    s3_bucket_name = var.dr_s3_bucket_name
+    s3_bucket_name = var.dr_media_s3_bucket
     primary_domain = var.primary_domain
     cloudfront_distribution_id = data.terraform_remote_state.cdn_dns.outputs.media_distribution_id
     cloudfront_media_domain = data.terraform_remote_state.cdn_dns.outputs.media_distribution_domain

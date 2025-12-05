@@ -102,6 +102,7 @@ STACK_VARS["global/cdn_dns"]="\
 STACK_VARS["primary/ecs"]="\
   -var-file=ecs.tfvars \
   -var primary_domain=$PRIMARY_DOMAIN \
+  -var primary_media_s3_bucket=$PRIMARY_MEDIA_S3_BUCKET \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 
@@ -109,6 +110,7 @@ STACK_VARS["primary/ecs"]="\
 STACK_VARS["dr/ecs"]="\
   -var-file=ecs.tfvars \
   -var primary_domain=$PRIMARY_DOMAIN \
+  -var dr_media_s3_bucket=$DR_MEDIA_S3_BUCKET \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 

@@ -54,7 +54,7 @@ variable "vpc_endpoints_config" {
   }))
 }
 
-variable "dr_s3_bucket_name" {
+variable "dr_media_s3_bucket" {
   type = string
 }
 
