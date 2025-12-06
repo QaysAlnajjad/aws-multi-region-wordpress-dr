@@ -19,12 +19,12 @@ data "terraform_remote_state" "primary_rds" {
 
 # Get primary RDS instance info
 data "aws_db_instance" "primary" {
-  db_instance_identifier = var.rds_identifier
+  db_instance_identifier = data.terraform_remote_state.primary_rds.identifier
   provider = aws.primary
 }
 
 resource "aws_db_instance" "read_replica" {
-  identifier = "${var.rds_identifier}-dr-replica"
+  identifier = "${data.aws_db_instance.primary.db_instance_identifier}-dr-replica"
   
   replicate_source_db = data.aws_db_instance.primary.db_instance_arn
   
@@ -79,7 +79,7 @@ data "aws_secretsmanager_secret_version" "primary_wordpress" {
 
 # Create DR secret with same WordPress credentials
 resource "aws_secretsmanager_secret" "rr" {
-  name = "${var.rds_identifier}-dr-replica-secret"
+  name = "${data.aws_db_instance.primary.db_instance_identifier}-dr-replica-secret"
   description = "WordPress database credentials for DR"
   recovery_window_in_days = 0
 }

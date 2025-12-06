@@ -49,35 +49,6 @@ data "aws_caller_identity" "current" {}
 
 # Conditional bucket policy builder: CloudFront + ECS role + VPCE (only when values provided)
 locals {
-  /*
-  # Accept either full distribution ARNs or just distribution IDs; normalize to ARNs.
-  cf_arns = [
-    for did in coalesce(var.cloudfront_distribution_arns, []) : (
-      startswith(did, "arn:aws:cloudfront::") ?
-      did :
-      "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${did}"
-    )
-  ]
-
-  cloudfront_statement = flatten([
-    for arn in local.cf_arns : [
-      {
-        Sid = "AllowCloudFrontGetObject-${replace(arn, ":", "-")}"
-        Effect = "Allow"
-        Principal = { Service = "cloudfront.amazonaws.com" }
-        Action = ["s3:GetObject"]
-        Resource = "${aws_s3_bucket.wordpress_media.arn}/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn" = arn
-            "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
-      }
-    ]
-  ])*/
-
-
   cloudfront_statement = (
     var.cloudfront_media_distribution_arn != ""
   ) ? [

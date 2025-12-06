@@ -56,20 +56,21 @@ module "cert" {
 module "cdn_dns" {
   source = "../../../modules/cdn_dns"
 
-  # Primary origins_naame
+  # ALB origins
   primary_alb_dns_name = data.terraform_remote_state.primary_alb.outputs.alb_dns_name
-  primary_alb_zone_id = data.terraform_remote_state.primary_alb.outputs.alb_zone_id
-
-  # DR origins
   dr_alb_dns_name = data.terraform_remote_state.dr_alb.outputs.alb_dns_name
 
   # S3 origins
   primary_bucket_regional_domain_name = data.terraform_remote_state.primary_s3.outputs.bucket_regional_domain_name
   dr_bucket_regional_domain_name = data.terraform_remote_state.dr_s3.outputs.bucket_regional_domain_name
 
+  # CDN configuration
   oac_id = data.terraform_remote_state.oac.outputs.oac_id
   cloudfront_distribution = var.cloudfront_distribution_config
+
+  # Route 53 configuration
   primary_domain = var.primary_domain
   hosted_zone_id = var.hosted_zone_id
   ssl_certificate_arn = var.provided_ssl_certificate_arn != "" ? var.provided_ssl_certificate_arn : module.cert[0].certificate_arn
+  primary_alb_zone_id = data.terraform_remote_state.primary_alb.outputs.alb_zone_id
 }

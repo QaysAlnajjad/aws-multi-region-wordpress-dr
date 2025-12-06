@@ -9,11 +9,6 @@ variable "s3_bucket_name" {
 variable "cloudfront_media_distribution_arn" {
   type = string
 }
-/*
-variable "cloudfront_distribution_arns" {
-  type = list(string)
-  description = "List of CloudFront distribution ARNs allowed to read this bucket (via OAC)."
-}*/
 
 variable "ecs_task_role_arn" {
   type = string

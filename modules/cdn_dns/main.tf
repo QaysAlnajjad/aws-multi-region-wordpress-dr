@@ -33,11 +33,11 @@ resource "aws_cloudfront_distribution" "main" {
         }
         
         member {
-          origin_id = "${each.key}-S3-DR"
+          origin_id = "${each.key}-S3-Primary"
         }
         
         member {
-          origin_id = "${each.key}-S3-Primary"
+          origin_id = "${each.key}-S3-DR"
         }
       }
     }
@@ -87,12 +87,12 @@ resource "aws_cloudfront_distribution" "main" {
     }
 
 ordered_cache_behavior {
-  path_pattern     = "/wp-content/uploads/*"
+  path_pattern = "/wp-content/uploads/*"
   target_origin_id = coalesce(each.value.s3_origin, false) ? "${each.key}-S3-Group" : "${each.key}-ALB-Group"
 
   allowed_methods = each.value.cache_behavior.allowed_methods
-  cached_methods  = each.value.cache_behavior.cached_methods
-  compress        = true
+  cached_methods = each.value.cache_behavior.cached_methods
+  compress = true
   viewer_protocol_policy = "redirect-to-https"
 
   forwarded_values {
@@ -110,9 +110,9 @@ ordered_cache_behavior {
     )
   }
 
-  min_ttl     = 0
+  min_ttl = 0
   default_ttl = lookup(each.value.cache_behavior, "media_ttl_default", each.value.cache_behavior.ttl_default)
-  max_ttl     = lookup(each.value.cache_behavior, "media_ttl_max", each.value.cache_behavior.ttl_max)
+  max_ttl = lookup(each.value.cache_behavior, "media_ttl_max", each.value.cache_behavior.ttl_max)
 }
 
 
