@@ -302,6 +302,7 @@ This architecture follows AWS Warm Standby DR pattern — a cost-efficient model
 aws-disaster-recovery/
 │
 ├── environments/
+│   ├── bootstrap/
 │   ├── global/
 │   │   ├── iam/
 │   │   ├── oac/  
@@ -332,7 +333,8 @@ aws-disaster-recovery/
     │   ├── config.sh
     │   ├── deploy.sh
     │   ├── destroy.sh
-    │   └── pull-docker-hub-to-ecr.sh
+    │   ├── pull-docker-hub-to-ecr.sh
+    │   └── stacks_config.sh
     └── runtime/
         ├── primary-ecr-image-uri
         └── dr-ecr-image-uri   
