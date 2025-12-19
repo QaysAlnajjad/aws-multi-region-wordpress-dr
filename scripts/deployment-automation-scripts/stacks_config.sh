@@ -11,25 +11,31 @@ STACK_VARS["global/iam"]="\
   -var dr_media_s3_bucket=$DR_MEDIA_S3_BUCKET"
 
 # GLOBAL OAC (no vars needed)
-STACK_VARS["global/oac"]=""
+STACK_VARS["global/oac"]="\
+  -var primary_region=$PRIMARY_REGION"
 
 # PRIMARY NETWORK + RDS
 STACK_VARS["primary/network_rds"]="\
   -var rds_identifier=$RDS_IDENTIFIER \
+  -var primary_region=$PRIMARY_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
   -var-file=network_rds.tfvars" 
 
 # DR NETWORK
-STACK_VARS["dr/network"]="-var-file=network.tfvars"
+STACK_VARS["dr/network"]="\
+  -var dr_region=$DR_REGION \
+  -var-file=network.tfvars"
 
 # PRIMARY S3
 STACK_VARS["primary/s3"]="\
+  -var primary_region=$PRIMARY_REGION \
   -var s3_bucket_name=$PRIMARY_MEDIA_S3_BUCKET"
 
 # PRIMARY ALB
 STACK_VARS["primary/alb"]="\
   -var-file=alb.tfvars \
+  -var primary_region=$PRIMARY_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
   -var primary_domain=$PRIMARY_DOMAIN \
@@ -40,18 +46,22 @@ STACK_VARS["primary/alb"]="\
 
 # DR Read Replica RDS
 STACK_VARS["dr/read_replica_rds"]="\
+  -var primary_region=$PRIMARY_REGION \
+  -var dr_region=$DR_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 
 # DR S3
 STACK_VARS["dr/s3"]="\
   -var s3_bucket_name=$DR_MEDIA_S3_BUCKET \
+  -var dr_region=$DR_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 
 # DR ALB
 STACK_VARS["dr/alb"]="\
   -var-file=alb.tfvars \
+  -var dr_region=$DR_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
   -var primary_domain=$PRIMARY_DOMAIN \
@@ -62,6 +72,7 @@ STACK_VARS["dr/alb"]="\
 # GLOBAL CloudFront + DNS
 STACK_VARS["global/cdn_dns"]="\
   -var-file=cdn_dns.tfvars \
+  -var primary_region=$PRIMARY_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
   -var provided_ssl_certificate_arn=$CLOUDFRONT_SSL_CERTIFICATE_ARN \
@@ -74,6 +85,7 @@ STACK_VARS["primary/ecs"]="\
   -var-file=ecs.tfvars \
   -var primary_domain=$PRIMARY_DOMAIN \
   -var primary_media_s3_bucket=$PRIMARY_MEDIA_S3_BUCKET \
+  -var primary_region=$PRIMARY_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
 
@@ -82,5 +94,6 @@ STACK_VARS["dr/ecs"]="\
   -var-file=ecs.tfvars \
   -var primary_domain=$PRIMARY_DOMAIN \
   -var dr_media_s3_bucket=$DR_MEDIA_S3_BUCKET \
+  -var dr_region=$DR_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"

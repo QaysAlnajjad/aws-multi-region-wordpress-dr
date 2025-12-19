@@ -1,7 +1,3 @@
-variable "primary_region" {
-    type = string
-}
-
 data "aws_caller_identity" "current" {}
 
 variable "dr_region" {

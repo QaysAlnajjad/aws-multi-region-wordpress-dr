@@ -7,13 +7,22 @@ terraform {
   }
 }
 
+
+variable "primary_region" {
+  type = string
+}
+
+variable "dr_region" {
+  type = string  
+}
+
 provider "aws" {
-  region = "ca-central-1"
+  region = var.dr_region
 }
 
 provider "aws" {
   alias  = "primary"
-  region = "us-east-1"
+  region = var.primary_region
 }
 
 
