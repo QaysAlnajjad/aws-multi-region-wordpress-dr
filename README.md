@@ -91,6 +91,77 @@ This project deploys a multi-region, production-grade WordPress platform using:
                           
 ```
 
+---
+
+# 🎥 Demo Videos
+
+The following short demos walk through the full lifecycle of the project — from bootstrap and deployment to validation and disaster recovery simulation.
+
+### ▶️ **Demo 1 (8 min)**  
+**AWS Multi-Region WordPress DR – Bootstrap &  CI/CD Deployment (Terraform + OIDC)**  
+https://youtu.be/-jRgfdVbeQc
+
+Covers:
+- Bootstrap IAM stack (OIDC, no static credentials)
+- GitHub Actions → AWS authentication
+- Automated multi-region Terraform deployment
+
+---
+
+### ▶️ **Demo 2 (4 min)**  
+**AWS Multi-Region WordPress DR – Primary Region Validation**  
+https://youtu.be/DITJBaNBQeQ
+
+Covers:
+- WordPress frontend & admin access
+- ALB + CloudFront behavior
+- S3 media uploads
+- RDS primary connectivity
+
+---
+
+### ▶️ **Demo 3 (10 min)**  
+**AWS Multi-Region WordPress DR – Failover Simulation**  
+https://youtu.be/7cX2Dw5RYVM
+
+Covers:
+- Primary region failure simulation
+- CloudFront origin failover
+- DR ALB traffic serving
+- RDS replica promotion
+- ECS scale-up in DR region
+- S3 media uploads (in DR region)
+
+---
+
+> ℹ️ **Post-Demo Improvement Note**
+>
+> The demo videos were recorded before a final security enhancement was applied.
+>
+> At the time of recording, the WordPress admin interface (`admin.example.com/wp-admin`)
+> triggered a browser SSL warning because the ACM certificate covered only the root domain.
+>
+> **After recording the demos**, the certificate configuration was improved to cover:
+>
+> ```
+> *.example.com
+> ```
+>
+> This eliminates all SSL warnings and ensures secure HTTPS access for both:
+> - Frontend traffic
+> - WordPress admin access
+>
+> The current code in this repository reflects the **improved and correct behavior**.
+
+---
+
+> 🔐 **Security Note**  
+> All demos were recorded using a sandbox AWS account with GitHub Actions OIDC authentication.  
+> No static AWS credentials, secrets, or IAM users were used or exposed.  
+> All IAM roles, infrastructure, and credentials used during recording were destroyed immediately after the demos.
+
+---
+
 # ⭐ **Key Features**
 
 ### 🟢 High Availability & Automated Failover
