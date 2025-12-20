@@ -69,10 +69,7 @@ variable "target_group_arn" {
 }
 
 variable "vpc_endpoints" {
-  type = map(object({
-    service_name = string
-    vpc_endpoint_type = string
-  }))
+  type = map(string)
 }
 
 variable "private_subnets_ids" {          

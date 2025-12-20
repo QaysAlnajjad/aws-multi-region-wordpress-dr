@@ -54,6 +54,7 @@ STACK_VARS["dr/read_replica_rds"]="\
 # DR S3
 STACK_VARS["dr/s3"]="\
   -var s3_bucket_name=$DR_MEDIA_S3_BUCKET \
+  -var primary_region=$PRIMARY_REGION \
   -var dr_region=$DR_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION"
@@ -72,7 +73,6 @@ STACK_VARS["dr/alb"]="\
 # GLOBAL CloudFront + DNS
 STACK_VARS["global/cdn_dns"]="\
   -var-file=cdn_dns.tfvars \
-  -var primary_region=$PRIMARY_REGION \
   -var state_bucket_name=$TF_STATE_BUCKET_NAME \
   -var state_bucket_region=$TF_STATE_BUCKET_REGION \
   -var provided_ssl_certificate_arn=$CLOUDFRONT_SSL_CERTIFICATE_ARN \

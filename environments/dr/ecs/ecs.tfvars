@@ -53,54 +53,17 @@ ecs_service_config = {
 }
 
 vpc_endpoints_config = {
-    logs = {
-        service_name = "com.amazonaws.ca-central-1.logs"
-        vpc_endpoint_type = "Interface"
-    }
-    s3 = {
-        service_name = "com.amazonaws.ca-central-1.s3"
-        vpc_endpoint_type = "Gateway"
-    }
-    ecs = {
-        service_name = "com.amazonaws.ca-central-1.ecs"
-        vpc_endpoint_type = "Interface"
-    }
-    sts = {
-        service_name = "com.amazonaws.ca-central-1.sts"
-        vpc_endpoint_type = "Interface"
-    }
-    monitoring = {
-        service_name = "com.amazonaws.ca-central-1.monitoring"
-        vpc_endpoint_type = "Interface"
-    }
-    ecr_api = {
-        service_name = "com.amazonaws.ca-central-1.ecr.api"
-        vpc_endpoint_type = "Interface"
-    }
-    ecr_dkr = {
-        service_name = "com.amazonaws.ca-central-1.ecr.dkr"
-        vpc_endpoint_type = "Interface"
-    }
-    ssmmessages = {
-        service_name = "com.amazonaws.ca-central-1.ssmmessages"
-        vpc_endpoint_type = "Interface"
-    }
-    ssm = {
-        service_name = "com.amazonaws.ca-central-1.ssm"
-        vpc_endpoint_type = "Interface"
-    }
-    ec2messages = {
-        service_name = "com.amazonaws.ca-central-1.ec2messages"
-        vpc_endpoint_type = "Interface"
-    }
-    secretsmanager = {
-        service_name = "com.amazonaws.ca-central-1.secretsmanager"
-        vpc_endpoint_type = "Interface"
-    }
+    "logs" = "Interface",
+    "s3" = "Gateway", 
+    "ecs" = "Interface",
+    "sts" = "Interface",
+    "monitoring" = "Interface",
+    "ecr.api" = "Interface",
+    "ecr.dkr" = "Interface",
+    "ssmmessages" = "Interface",
+    "ssm" = "Interface",
+    "ec2messages" = "Interface",
+    "secretsmanager" = "Interface"
 }
-
-
-
-
 
 

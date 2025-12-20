@@ -50,10 +50,7 @@ variable "ecs_service_config" {
 }
 
 variable "vpc_endpoints_config" {
-  type = map(object({
-    service_name = string
-    vpc_endpoint_type = string
-  }))
+  type = map(string)
 }
 
 variable "primary_media_s3_bucket" {

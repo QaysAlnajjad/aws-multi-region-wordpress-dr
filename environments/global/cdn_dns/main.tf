@@ -51,6 +51,10 @@ module "cert" {
   subject_alternative_names = var.certificate_sans
   hosted_zone_id = var.hosted_zone_id
   environment = "CDN"
+
+  providers = {
+    aws = aws.us_east_1
+  }
 }
 
 module "cdn_dns" {

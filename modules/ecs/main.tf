@@ -153,14 +153,14 @@ data "aws_route_tables" "private" {
 resource "aws_vpc_endpoint" "main" {
   for_each = var.vpc_endpoints
     vpc_id = var.vpc_id
-    service_name = each.value.service_name
-    vpc_endpoint_type = each.value.vpc_endpoint_type
+    service_name = "com.amazonaws.${data.aws_region.current.name}.${each.key}"
+    vpc_endpoint_type = each.value
     # Interface endpoints use subnets and security groups
-    subnet_ids = each.value.vpc_endpoint_type == "Interface" ? var.private_subnets_ids : null
-    security_group_ids = each.value.vpc_endpoint_type == "Interface" ? [var.vpc_endpoints_security_group_id] : null
-    private_dns_enabled = each.value.vpc_endpoint_type == "Interface" ? true : null
+    subnet_ids = each.value == "Interface" ? var.private_subnets_ids : null
+    security_group_ids = each.value == "Interface" ? [var.vpc_endpoints_security_group_id] : null
+    private_dns_enabled = each.value == "Interface" ? true : null
     # Gateway endpoints use route tables
-    route_table_ids = each.value.vpc_endpoint_type == "Gateway" ? data.aws_route_tables.private.ids : null
+    route_table_ids = each.value == "Gateway" ? data.aws_route_tables.private.ids : null
     # Tag
     tags = { Name = "${each.key}-endpoint" }
 }

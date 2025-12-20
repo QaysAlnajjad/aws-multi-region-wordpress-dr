@@ -572,7 +572,7 @@ GitHub will automatically:
 
 ✓ Output WordPress endpoints
 
-Total time: 20–30 minutes
+Total time ~ 50 minutes
 
 
 ### ✓ 🐳 Docker Image Mirroring (Helper Script)
@@ -737,78 +737,235 @@ Primary ($187–$305) + DR ($145–$196)
 
 This project implements a realistic multi-region DR (Disaster Recovery) architecture using a Warm Standby strategy. While effective and cost-efficient, it includes several intentional trade-offs and limitations that are important to understand.
 
-1. Manual RDS Failover (Replica Promotion)
+### 1. Manual RDS Failover (Replica Promotion)
 
 * The cross-region RDS replica does not automatically become primary.
 * In a region-wide failure, an operator must manually promote the read replica in the DR region.
 * This introduces a small delay (RTO) until the database becomes writable again.
 
-Trade-off:
-Automatic failover reduces downtime but increases complexity and cost. Manual promotion is simpler and appropriate for warm-standby DR.
+  Trade-off:
+  Automatic failover reduces downtime but increases complexity and cost. Manual promotion is simpler and appropriate for warm-standby DR.
 
-2. RDS Replication Lag (RPO > 0)
+### 2. RDS Replication Lag (RPO > 0)
 
 * Cross-region MySQL replication introduces replication lag of seconds to minutes depending on load.
 * During failover, the DR region may lose very recent writes.
 
-Trade-off:
-Achieving zero data loss requires synchronous replication or multi-master setups, which are significantly more expensive.
+  Trade-off:
+  Achieving zero data loss requires synchronous replication or multi-master setups, which are significantly more expensive.
 
-3. ECS DR Cluster is Warm, Not Active
+### 3. ECS DR Cluster is Warm, Not Active
 
 * ECS tasks in the DR region are scaled down to 0 (or minimal) until failover.
 * A failover event requires scaling ECS services up, which adds delay before full recovery.
 
-Trade-off:
-Warm standby reduces cost by 50–70% compared to active-active multi-region setups.
+  Trade-off:
+  Warm standby reduces cost by 50–70% compared to active-active multi-region setups.
 
-4. Health checks do not validate the database layer
+### 4. Health checks do not validate the database layer
 
 * CloudFront + ALB health checks validate HTTP availability, not database availability.
 * If ALB/ECS is healthy but RDS is down, users may still see WordPress errors.
 
-Trade-off: End-to-end DB health checks require custom application endpoints or deeper monitoring.
-For simplicity, this solution checks only at the HTTP level.
+  Trade-off: End-to-end DB health checks require custom application endpoints or deeper monitoring.
+  For simplicity, this solution checks only at the HTTP level.
 
-5. Lambda Automation Runs Once (Bootstrap Only)
+### 5. Lambda Automation Runs Once (Bootstrap Only)
 
 * The DB setup Lambda runs only during initial deployment.
 * Schema migrations or future DB updates must be handled manually or using a CI/CD process.
 
-Trade-off:
-Automating migrations adds complexity (Liquibase, Flyway, custom pipelines), so bootstrap-only logic keeps the project simple.
+  Trade-off:
+  Automating migrations adds complexity (Liquibase, Flyway, custom pipelines), so bootstrap-only logic keeps the project simple.
 
-6. S3 Replication Provides Eventual Consistency
+### 6. S3 Replication Provides Eventual Consistency
 
 * S3 Cross-Region Replication (CRR) is asynchronous.
 * Media files may take seconds or minutes to appear in the DR region after upload.
 
-Trade-off:
-Fully synchronous replication for media storage is expensive and not supported natively by S3.
+  Trade-off:
+  Fully synchronous replication for media storage is expensive and not supported natively by S3.
 
-7. Failover Decision Is Operator-Driven
+### 7. Failover Decision Is Operator-Driven
 
 * This DR design intentionally avoids auto-failover to prevent false positives.
 * Failover requires human confirmation.
 
-Trade-off:
-Auto-failover is fast but risks flipping regions due to transient issues. Warm-standby DR normally uses controlled manual failover.
+  Trade-off:
+  Auto-failover is fast but risks flipping regions due to transient issues. Warm-standby DR normally uses controlled manual failover.
 
-8. No Fully Automated DR Drills
+### 8. No Fully Automated DR Drills
 
 * Disaster Recovery drills (regional failure simulations) must be executed manually.
 * Automated DR testing pipelines are not included.
 
-Trade-off:
-Automation adds complexity; manual testing remains common in warm standby setups.
+  Trade-off:
+  Automation adds complexity; manual testing remains common in warm standby setups.
 
-9. DR ALB Always Running
+### 9. DR ALB Always Running
 
 * The DR region's ALB is always provisioned to allow immediate failover.
 * This introduces a small fixed cost even when the region is idle.
 
-Trade-off:
-Keeping the ALB "cold" would save money but increases RTO (longer DR recovery time).
+  Trade-off:
+  Keeping the ALB "cold" would save money but increases RTO (longer DR recovery time).
+
+### 10. IAM & RDS Secrets Manager – Region-Specific Consistency Trade-off
+This limitation documents a region-specific consistency behavior observed when using
+Amazon RDS–managed Secrets Manager credentials together with tag-based IAM conditions.
+
+While tag-based access control worked reliably in `us-east-1`, it caused non-deterministic
+failures in other regions (e.g. `us-east-2`) due to eventual consistency in AWS-managed
+secret creation and tag propagation.
+
+As a result, this project intentionally prioritizes deterministic, region-safe IAM policies
+over tag-based conditions for RDS-managed secrets.
+
+#### Background
+
+This project uses Amazon RDS with `manage_master_user_password = true`, which instructs AWS
+to automatically generate and manage the database master credentials in AWS Secrets Manager.
+
+The secret is created and owned by Amazon RDS, not by Terraform or the application.
+
+---
+
+Initial Security Approach (Tag-Based IAM Conditions)
+
+To follow least-privilege IAM principles, the Lambda function responsible for initializing the WordPress database was originally restricted using resource tags on the RDS-generated secret.
+
+Example IAM policy (initial attempt)
+
+```bash 
+# RDS auth secret (master password)
+{
+  Effect = "Allow"
+  Action = [
+    "secretsmanager:GetSecretValue",
+    "secretsmanager:DescribeSecret"
+  ]
+  Resource = ["arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:*"],
+  Condition = {
+    StringEquals = {
+      "aws:ResourceTag/Project" = "wordpress",
+      "aws:ResourceTag/Component" = "rds-auth"
+    }
+  }
+}
+```
+
+
+Terraform attempted to tag the RDS-managed secret immediately after the database was created:
+
+```bash
+resource "null_resource" "tag_rds_master_secret" {
+  triggers = {
+    secret = aws_db_instance.rds.master_user_secret[0].secret_arn
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+aws secretsmanager tag-resource \
+  --secret-id ${aws_db_instance.rds.master_user_secret[0].secret_arn} \
+  --tags Key=Project,Value=wordpress Key=Component,Value=rds-auth
+EOT
+  }
+}
+```
+--- 
+
+Observed Behavior
+
+✅ In us-east-1: 
+
+  * This approach worked reliably across multiple deployments.
+
+❌ In us-east-2 (and other regions): 
+
+  * Terraform failed with the following error:
+
+```bash
+An error occurred (ResourceNotFoundException) when calling the TagResource operation:
+Secrets Manager can't find the specified secret.
+```
+
+This occurred even though:
+
+  * The secret did exist
+
+  * The secret was visible in the AWS Console
+
+  * The ARN was correct
+
+  * The RDS instance had completed creation
+
+---
+
+Root Cause (AWS Service Behavior)
+
+This is a region-dependent AWS behavior, not a Terraform bug.
+
+Key facts:
+
+  * RDS-managed secrets are created asynchronously
+
+  * Tag propagation and tag visibility are eventually consistent
+
+  * AWS does not guarantee immediate tag availability for service-managed secrets
+
+  * IAM tag-based conditions may be evaluated before tags are visible
+
+  * Behavior is not consistent across regions
+
+As a result:
+
+  * Lambda was denied access because the tag condition could not be evaluated
+
+  * Even though the secret existed, AWS treated it as not matching the IAM policy
+
+  * This caused non-deterministic failures outside us-east-1
+
+---
+
+Final Design Decision (Production-Safe)
+
+To ensure deterministic and region-safe deployments, the project intentionally does not rely on tag-based IAM conditions for RDS-managed secrets.
+
+Instead, access is restricted by:
+
+  * Account
+
+  * Region
+
+  * Secret ARN pattern
+
+Final IAM policy (used in this project)
+```bash
+  # RDS auth secret (master password)
+  {
+    Effect = "Allow"
+    Action = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
+    ]
+    Resource = ["arn:aws:secretsmanager:${var.primary_region}:${data.aws_caller_identity.current.account_id}:secret:*"]
+  }
+```
+Why This Is the Correct Approach
+
+✔ Deterministic across all AWS regions
+
+✔ No race conditions during provisioning
+
+✔ Works reliably in CI/CD pipelines
+
+✔ Still enforces strong isolation (account + region scoped)
+
+✔ Aligns with AWS ownership model for service-managed resources
+
+AWS Well-Architected guidance favors reliability and predictability over brittle, timing-sensitive IAM conditions — especially for resources created and controlled by AWS services.
+
+---
 
 Summary
 
@@ -828,3 +985,6 @@ But they also mean the system is not active-active and sacrifices some speed and
 This project is open for personal and educational use.
 
 ---
+
+
+

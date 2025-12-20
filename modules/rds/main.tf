@@ -26,20 +26,6 @@ resource "aws_db_instance" "rds" {
   skip_final_snapshot = true
 }
 
-resource "null_resource" "tag_rds_master_secret" {
-  triggers = {
-    secret = aws_db_instance.rds.master_user_secret[0].secret_arn
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-aws secretsmanager tag-resource \
-  --secret-id ${aws_db_instance.rds.master_user_secret[0].secret_arn} \
-  --tags Key=Project,Value=wordpress Key=Component,Value=rds-auth
-EOT
-  }
-}
-
 
 //==========================================================================================================================================
 //                                                    Secrets + Secrets Manager Endpoint
@@ -81,10 +67,9 @@ resource "aws_vpc_endpoint" "secretsmanager" {
 }
 
 
-
 /*
 //==========================================================================================================================================
-//                                                            Lambda
+//                                                           Lambda 
 //==========================================================================================================================================
 */
 
@@ -122,18 +107,19 @@ resource "aws_lambda_function" "lambda" {
 
   depends_on = [
     aws_cloudwatch_log_group.lambda_logs,
-    aws_vpc_endpoint.secretsmanager,
-    null_resource.tag_rds_master_secret
+    aws_vpc_endpoint.secretsmanager
   ]
 
 }
 
-resource "null_resource" "invoke_lambda_after_creation" {
-  depends_on = [
-    aws_lambda_function.lambda
-  ]
+resource "aws_lambda_invocation" "db_bootstrap" {
+  function_name = aws_lambda_function.lambda.function_name
 
-  provisioner "local-exec" {
-    command = "aws lambda invoke --function-name wordpress-db-setup /tmp/lambda_output.json"
-  }
+  input = jsonencode({
+    trigger = "terraform"
+  })
+
+  depends_on = [
+    aws_db_instance.rds
+  ]
 }
