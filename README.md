@@ -16,6 +16,7 @@ All infrastructure is 100% managed using **Terraform**, following AWS **Well-Arc
 # 📘 Table of Contents
 
 - [Architecture Overview](#architecture-overview)
+- [Demo Videos](#demo-videos)
 - [Key Features](#key-features)
 - [Design Principles](#design-principles)
 - [Technology Stack](#technology-stack)
@@ -32,7 +33,7 @@ All infrastructure is 100% managed using **Terraform**, following AWS **Well-Arc
 
 ---
 
-# 🏗 **Architecture Overview**
+# **Architecture Overview**
 
 This project deploys a multi-region, production-grade WordPress platform using:
 
@@ -45,7 +46,7 @@ This project deploys a multi-region, production-grade WordPress platform using:
 * **Origin Failover:** CloudFront automatically fails over to DR ALB & DR S3
 --- 
 
-## 🏗 Multi-Region Architecture (ASCII Diagram)
+## Multi-Region Architecture (ASCII Diagram)
 
 ```text
                                    ┌──────────────┐
@@ -92,7 +93,7 @@ This project deploys a multi-region, production-grade WordPress platform using:
 
 ---
 
-# 🎥 Demo Videos
+# **Demo Videos**
 
 The following short demos walk through the full lifecycle of the project — from bootstrap and deployment to validation and disaster recovery simulation.
 
@@ -161,7 +162,7 @@ Covers:
 
 ---
 
-# ⭐ **Key Features**
+# **Key Features**
 
 ### 🟢 High Availability & Automated Failover
 
@@ -189,7 +190,7 @@ Covers:
 
 ---
 
-# 📐 **Design Principles**
+# **Design Principles**
 
 | AWS Well-Architected Pillar | Implementation                                         |
 | --------------------------- | ------------------------------------------------------ |
@@ -201,7 +202,7 @@ Covers:
 
 ---
 
-# 🔧 **Technology Stack**
+# **Technology Stack**
 
 ### **AWS Services**
 
@@ -226,7 +227,7 @@ Covers:
 
 ---
 
-# 🧱 **Infrastructure Components**
+# **Infrastructure Components**
 
 ### 🟦 **1. ECS Fargate WordPress**
 
@@ -300,7 +301,7 @@ Media failover is 100% automatic - no operator intervention needed.
 
 ---
 
-# 🌐 **Failover Strategy**
+# **Failover Strategy**
 
 ## **1. Application Failover (Fully Automatic)**
 
@@ -366,7 +367,7 @@ This architecture follows AWS Warm Standby DR pattern — a cost-efficient model
 
 ---
 
-# 📁 **Terraform Structure**
+# **Terraform Structure**
 
 ```bash
 aws-disaster-recovery/
@@ -422,7 +423,7 @@ A detailed diagram of how stack outputs flow between stacks is available here:
 
 --- 
 
-# 📘 **Reviewer Setup (How to Deploy This Project in Your AWS Account)** 
+# **Reviewer Setup (How to Deploy This Project in Your AWS Account)** 
 
 This section explains exactly how to deploy and test the full multi-region WordPress DR architecture in your own AWS account, with no AWS access keys and no manual Terraform commands (after bootstrap).
 
@@ -638,7 +639,7 @@ This ensures a clean teardown with no orphaned resources.
 
 ---
 
-# 🆘 **DR Failover Guide**
+# **DR Failover Guide**
 
 ### Automatic:
 
@@ -655,10 +656,10 @@ This ensures a clean teardown with no orphaned resources.
 
 ---
 
-# 📊 **CloudWatch Monitoring and Alarms**
+# **CloudWatch Monitoring and Alarms**
 
 This project implements centralized observability using Amazon CloudWatch.
-Both the application (ECS) layer and the automation layer (Lambda) are instrumented with log groups and health-monitoring alarms.
+The automation layer consists of a one-time Lambda invocation used only during initial infrastructure provisioning.
 
 ✔ ECS Logging
 
@@ -694,13 +695,13 @@ The database-initialization Lambda function (wordpress-db-setup) includes full l
 * All Lambda execution output (including errors, DB setup output, Secrets Manager interactions) is logged
 * Logs assist in debugging database bootstrap, credential provisioning, and RDS post-creation automation
 
-The database-initialization Lambda function is triggered automatically during the initial deployment process to perform one-time WordPress database bootstrap operations (schema creation and credential initialization).
+The database-initialization Lambda function is invoked synchronously by Terraform during the initial terraform apply, immediately after the RDS instance is created.
 
 This automation is intentionally designed to run only during initial provisioning. Future schema changes or migrations are expected to be handled via application-level processes or CI/CD pipelines.
 
 ---
 
-# 🔐 **Security Best Practices Used**
+# **Security Best Practices Used**
 
 * TLS 1.2+ enforced
 * HTTPS for admin + frontend
@@ -713,7 +714,7 @@ This automation is intentionally designed to run only during initial provisionin
 
 ---
 
-# 💰 **Cost Optimization**
+# **Cost Optimization**
 
 This architecture follows a Warm Standby DR model to significantly reduce multi-region cloud expenses.
 
@@ -752,7 +753,7 @@ Primary ($187–$305) + DR ($145–$196)
 
 ---
 
-# ⚠️ **Known Limitations and Trade-offs**
+# **Known Limitations and Trade-offs**
 
 This project implements a realistic multi-region DR (Disaster Recovery) architecture using a Warm Standby strategy. While effective and cost-efficient, it includes several intentional trade-offs and limitations that are important to understand.
 
@@ -999,11 +1000,9 @@ But they also mean the system is not active-active and sacrifices some speed and
 
 --- 
 
-# 📄 **License**
+# **License**
 
 This project is open for personal and educational use.
 
 ---
-
-
 
