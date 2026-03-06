@@ -1,42 +1,55 @@
 ############################################
-#  AWS Regions
+# AWS Regions
 ############################################
-PRIMARY_REGION="us-east-1"
-DR_REGION="ca-central-1"
+regions:
+  primary: us-east-1
+  dr: ca-central-1
 
 ############################################
-#  Terraform Backend Config
+# Terraform Backend
 ############################################
-TF_STATE_BUCKET_NAME="terraform-state-1011202555"
-TF_STATE_BUCKET_REGION="eu-central-1"
+terraform:
+  backend:
+    bucket_name: terraform-state-1011202555
+    region: eu-central-1
 
 ############################################
-#  Docker / Container Config
+# Container / Images
 ############################################
-DOCKERHUB_IMAGE="qaysalnajjad/ecs-wordpress-app:v3.6"
-ECR_REPO_NAME="ecs-wordpress-app"
+docker:
+  dockerhub_image: qaysalnajjad/ecs-wordpress-app:v3.6
+ecr:
+  repository: ecs-wordpress-app
 
 ############################################
-#  Media S3 buckets
+# Media Storage
 ############################################
-PRIMARY_MEDIA_S3_BUCKET="wordpress-media-primary-2004"
-DR_MEDIA_S3_BUCKET="wordpress-media-dr-2004"
+s3:
+  media:
+    primary_bucket: wordpress-media-primary-2004
+    dr_bucket: wordpress-media-dr-2004
 
 ############################################
-#  Media S3 buckets
+# Database
 ############################################
-RDS_IDENTIFIER="wordpress-rds"
+rds:
+  identifier: wordpress-rds
 
 ############################################
-#  Domain and hosted zone
+# Domain
 ############################################
-HOSTED_ZONE_ID=""
-PRIMARY_DOMAIN="example.com"   # Primary custom domain without www (e.g., yourdomain.com)
-CERTIFICATE_SANs='["*.example.com"]'
+domain:
+  hosted_zone_id: ""
+  primary_domain: example.com  # Primary custom domain without www (e.g., yourdomain.com)
+  certificate_sans:
+    - "*.example.com"
 
 ############################################
-#  SSL certificates
+# SSL Certificates
 ############################################
-PRIMARY_ALB_SSL_CERTIFICATE_ARN=""
-DR_ALB_SSL_CERTIFICATE_ARN=""
-CLOUDFRONT_SSL_CERTIFICATE_ARN=""
+certificates:
+  primary_alb: ""
+  dr_alb: ""
+  cloudfront: ""
+
+
