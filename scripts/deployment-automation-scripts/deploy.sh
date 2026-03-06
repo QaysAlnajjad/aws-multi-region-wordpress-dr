@@ -1,9 +1,8 @@
 #!/bin/bash
 
 set -e
-source "$(dirname "$0")/load-config.sh" "$(dirname "$0")/config.yaml"
-source "$(dirname "$0")/stacks_config.sh"
-
+source "$(dirname "$0")/config.sh"
+source "$(dirname "$0")/stacks_config.sh" 
 
 # Validate TF backend bucket
 if [ -z "$TF_STATE_BUCKET_NAME" ]; then
