@@ -4,6 +4,16 @@ set -e
 source "$(dirname "$0")/config.yaml"
 source "$(dirname "$0")/stacks_config.sh" 
 
+CONFIG_FILE="$(dirname "$0")/config.yaml"
+
+TF_STATE_BUCKET_NAME=$(yq -r '.terraform.backend.bucket_name' "$CONFIG_FILE")
+TF_STATE_BUCKET_REGION=$(yq -r '.terraform.backend.region' "$CONFIG_FILE")
+PRIMARY_REGION=$(yq -r '.regions.primary' "$CONFIG_FILE")
+DR_REGION=$(yq -r '.regions.dr' "$CONFIG_FILE")
+
+
+
+
 # Validate TF backend bucket
 if [ -z "$TF_STATE_BUCKET_NAME" ]; then
   echo "❌ ERROR: TF_STATE_BUCKET_NAME is required"; exit 1
