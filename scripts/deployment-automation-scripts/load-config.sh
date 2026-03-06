@@ -1,5 +1,6 @@
+
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 CONFIG_FILE="${1:-$(dirname "$0")/../config.yaml}"
 
