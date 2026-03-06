@@ -9,7 +9,7 @@ trap 'echo "ERROR at line $LINENO"; exit 1' ERR
 # Optional env for Docker Hub auth:
 #   DOCKERHUB_USERNAME and DOCKERHUB_TOKEN
 
-source "$(dirname "$0")/load-config.sh"
+source "$(dirname "$0")/config.sh"
 
 AWS_REGION=$1
 ENVIRONMENT=$2
