@@ -2,7 +2,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-CONFIG_FILE="${1:-$(dirname "$0")/../config.yaml}"
+CONFIG_FILE="${1:-$(dirname "$0")/config.yaml}"
 
 command -v yq >/dev/null 2>&1 || {
   echo "❌ ERROR: yq is required but not installed"
