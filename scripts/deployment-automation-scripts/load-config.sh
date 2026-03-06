@@ -27,8 +27,10 @@ PRIMARY_DOMAIN=$(yq -r '.domain.primary_domain' "$CONFIG_FILE")
 CERTIFICATE_SANs=$(yq -c '.domain.certificate_sans' "$CONFIG_FILE")
 
 PRIMARY_ALB_SSL_CERTIFICATE_ARN=$(yq -r '.certificates.primary_alb' "$CONFIG_FILE")
-DR_ALB_SSL_CERTIFICATE_ARN=$(yq -r '.certificates.dr_alb' "$CONFIG_FILE')
-CLOUDFRONT_SSL_CERTIFICATE_ARN=$(yq -r '.certificates.cloudfront' "$CONFIG_FILE')
+DR_ALB_SSL_CERTIFICATE_ARN=$(yq -r '.certificates.dr_alb' "$CONFIG_FILE")
+CLOUDFRONT_SSL_CERTIFICATE_ARN=$(yq -r '.certificates.cloudfront' "$CONFIG_FILE")
+
+
 
 export PRIMARY_REGION
 export DR_REGION
